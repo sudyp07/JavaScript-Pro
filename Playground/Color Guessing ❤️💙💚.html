@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Color Guessing Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f5f7fa 0%, #e6ecf5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 1rem;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 3rem;
+            box-shadow: 0 25px 40px -12px rgba(0, 20, 40, 0.35);
+            padding: 2.5rem 2rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            transition: 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        h1 {
+            font-weight: 600;
+            font-size: 2.2rem;
+            letter-spacing: -0.5px;
+            color: #1b2b4e;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .subhead {
+            color: #4a5b7a;
+            font-size: 1rem;
+            font-weight: 400;
+            margin-bottom: 1.8rem;
+            border-bottom: 1px dashed #bcc9e0;
+            padding-bottom: 0.75rem;
+        }
+
+        .color-preview {
+            width: 100%;
+            height: 140px;
+            border-radius: 2.5rem;
+            background: #b0c4de;
+            margin: 0.5rem 0 1.8rem 0;
+            box-shadow: inset 0 8px 14px rgba(0, 0, 0, 0.08), 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: background 0.2s ease;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .color-code {
+            font-family: 'Fira Code', 'JetBrains Mono', monospace;
+            background: #1e2a3f;
+            color: #f0f9ff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 60px;
+            display: inline-block;
+            font-size: 1.5rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            margin-bottom: 2rem;
+            box-shadow: 0 6px 0 #0e1625;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1.8rem 0 2rem;
+        }
+
+        .color-btn {
+            border: none;
+            border-radius: 2rem;
+            height: 72px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.1), 0 6px 12px rgba(0, 0, 0, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1d2b3f;
+            background: #f0f4fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.3px;
+            padding: 0 0.3rem;
+        }
+
+        .color-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 10px 0 rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .color-btn:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .color-btn:disabled {
+            opacity: 0.7;
+            transform: scale(0.97);
+            filter: grayscale(0.3);
+            cursor: not-allowed;
+        }
+
+        .status-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 0.8rem 1.5rem;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+            margin: 0.5rem 0 1.5rem;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .message {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #1a2942;
+        }
+
+        .score {
+            background: #1b2b4e;
+            color: white;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            box-shadow: inset 0 -3px 0 #3c5279;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1d2b3f;
+            box-shadow: 0 6px 0 #b3c2db, 0 4px 12px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: all 0.12s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            flex: 1 1 auto;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: #2a3f62;
+            color: white;
+            box-shadow: 0 6px 0 #142135;
+        }
+
+        .btn-primary:hover {
+            background: #334f79;
+            transform: scale(1.01);
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #b3c2db;
+        }
+
+        .btn-primary:active {
+            box-shadow: 0 2px 0 #142135;
+        }
+
+        .footer-note {
+            margin-top: 1.8rem;
+            font-size: 0.85rem;
+            color: #50648b;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 480px) {
+            .game-card {
+                padding: 1.8rem 1rem;
+            }
+
+            .options-grid {
+                gap: 0.7rem;
+            }
+
+            .color-btn {
+                height: 60px;
+            }
+
+            .color-code {
+                font-size: 1.2rem;
+                padding: 0.4rem 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-card" role="main">
+        <h1>
+            <span>🎯</span> Color Guess
+        </h1>
+        <div class="subhead">match the color · pick the right hex</div>
+
+        <!-- color swatch -->
+        <div class="color-preview" id="colorPreview" style="background: #b0c4de;" aria-label="target color"></div>
+
+        <!-- target hex code -->
+        <div class="color-code" id="targetHex">#b0c4de</div>
+
+        <!-- 3 color options -->
+        <div class="options-grid" id="optionsContainer">
+            <button class="color-btn" id="option0" data-index="0">#??????</button>
+            <button class="color-btn" id="option1" data-index="1">#??????</button>
+            <button class="color-btn" id="option2" data-index="2">#??????</button>
+        </div>
+
+        <!-- status & score -->
+        <div class="status-area">
+            <span class="message" id="messageDisplay">✨ pick a color</span>
+            <span class="score" id="scoreDisplay">🏆 0</span>
+        </div>
+
+        <!-- control buttons -->
+        <div class="action-buttons">
+            <button class="btn" id="newGameBtn">🔄 New Game</button>
+            <button class="btn btn-primary" id="resetScoreBtn">🆕 Reset Score</button>
+        </div>
+        <div class="footer-note">✔️ correct +10 · wrong –5</div>
+    </div>
+
+    <script>
+        (function () {
+            "use strict";
+
+            // ---------- DOM refs ----------
+            const colorPreview = document.getElementById('colorPreview');
+            const targetHexDisplay = document.getElementById('targetHex');
+            const optionBtns = [
+                document.getElementById('option0'),
+                document.getElementById('option1'),
+                document.getElementById('option2')
+            ];
+            const messageDisplay = document.getElementById('messageDisplay');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+
+            const newGameBtn = document.getElementById('newGameBtn');
+            const resetScoreBtn = document.getElementById('resetScoreBtn');
+
+            // ---------- State ----------
+            let currentScore = 0;
+            let targetColor = '#b0c4de';          // current target
+            let options = ['#b0c4de', '#8fbc8f', '#cd5c5c']; // will hold 3 hex strings
+            let gameActive = true;                // block clicks when round ends (optional)
+            let roundLocked = false;              // prevent double answer
+
+            // ---------- helpers ----------
+            function randomHex() {
+                // returns a random hex color like #a1b2c3
+                const r = Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+                const g = Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+                const b = Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+                return `#${r}${g}${b}`;
+            }
+
+            // generates an array of 3 unique hex colors (target + 2 distractors)
+            function generateOptions(targetHex) {
+                let opts = new Set();
+                opts.add(targetHex);
+                // add unique distractors
+                let attempts = 0;
+                while (opts.size < 3 && attempts < 200) {
+                    const candidate = randomHex();
+                    if (candidate !== targetHex) {
+                        opts.add(candidate);
+                    }
+                    attempts++;
+                }
+                // fallback: if still less than 3, fill with variants
+                while (opts.size < 3) {
+                    opts.add(randomHex());
+                }
+                // shuffle the array so target not always first
+                const arr = Array.from(opts);
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+
+            // update UI with new target and options
+            function setNewRound() {
+                // generate new target
+                targetColor = randomHex();
+                // generate options (including target)
+                options = generateOptions(targetColor);
+
+                // update preview & hex display
+                colorPreview.style.background = targetColor;
+                targetHexDisplay.textContent = targetColor.toUpperCase();
+
+                // update buttons: set background & text
+                optionBtns.forEach((btn, idx) => {
+                    const hex = options[idx] || '#cccccc';
+                    btn.style.background = hex;
+                    btn.textContent = hex.toUpperCase();
+                    // reset disabled state & remove any extra style
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.transform = '';
+                });
+
+                // reset round lock & message
+                roundLocked = false;
+                gameActive = true;
+                messageDisplay.textContent = '🎨 pick the correct color';
+                // enable all buttons (if any disabled)
+                optionBtns.forEach(btn => btn.disabled = false);
+            }
+
+            // update score display
+            function updateScoreDisplay() {
+                scoreDisplay.textContent = `🏆 ${currentScore}`;
+            }
+
+            // handle answer
+            function handleAnswer(selectedIndex) {
+                if (roundLocked || !gameActive) return;
+                // lock the round
+                roundLocked = true;
+                gameActive = false;
+
+                const selectedHex = options[selectedIndex];
+                const isCorrect = (selectedHex === targetColor);
+
+                // visual feedback
+                optionBtns.forEach((btn, idx) => {
+                    btn.disabled = true;
+                    if (idx === selectedIndex) {
+                        if (isCorrect) {
+                            btn.style.transform = 'scale(1.05)';
+                            btn.style.boxShadow = '0 0 0 4px #2ecc71, 0 8px 0 rgba(0,0,0,0.1)';
+                        } else {
+                            btn.style.transform = 'scale(0.95)';
+                            btn.style.boxShadow = '0 0 0 4px #e74c3c, 0 8px 0 rgba(0,0,0,0.1)';
+                        }
+                    }
+                });
+
+                // update score & message
+                if (isCorrect) {
+                    currentScore += 10;
+                    messageDisplay.textContent = '✅ Correct! +10 points 🎉';
+                } else {
+                    currentScore = Math.max(0, currentScore - 5); // prevent negative
+                    messageDisplay.textContent = `❌ Wrong! –5 points. The correct was ${targetColor.toUpperCase()}`;
+                }
+                updateScoreDisplay();
+
+                // highlight correct answer (show which one was target)
+                optionBtns.forEach((btn, idx) => {
+                    if (options[idx] === targetColor) {
+                        btn.style.outline = '3px solid #2ecc71';
+                        btn.style.outlineOffset = '2px';
+                    }
+                });
+            }
+
+            // ---------- reset / new game ----------
+            function resetGame() {
+                // reset all styles, enable, and set a new round
+                optionBtns.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.transform = '';
+                    btn.style.boxShadow = '';
+                    btn.style.outline = '';
+                    btn.style.opacity = '1';
+                });
+                // reset round state
+                roundLocked = false;
+                gameActive = true;
+                setNewRound();
+                messageDisplay.textContent = '🔄 new round!';
+                // preserve score
+            }
+
+            function resetScoreAndGame() {
+                currentScore = 0;
+                updateScoreDisplay();
+                resetGame();
+                messageDisplay.textContent = '🔄 score reset · new game';
+            }
+
+            // ---------- attach event listeners ----------
+            optionBtns.forEach((btn, index) => {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    handleAnswer(index);
+                });
+            });
+
+            newGameBtn.addEventListener('click', function () {
+                resetGame();
+            });
+
+            resetScoreBtn.addEventListener('click', function () {
+                resetScoreAndGame();
+            });
+
+            // ---------- initialization ----------
+            function initGame() {
+                // set initial score to 0
+                currentScore = 0;
+                updateScoreDisplay();
+                // generate first round
+                setNewRound();
+                messageDisplay.textContent = '🎯 pick a color!';
+                // ensure all buttons are clickable
+                optionBtns.forEach(btn => btn.disabled = false);
+                gameActive = true;
+                roundLocked = false;
+            }
+
+            initGame();
+
+            // (optional) extra: keyboard / a11y: but fine
+        })();
+    </script>
+</body>
+
+</html>

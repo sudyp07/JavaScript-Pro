@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>⌨️ Typing Speed Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #0b1120 0%, #1a2744 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            padding: 1.2rem;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 3rem;
+            padding: 2.5rem 2.2rem;
+            max-width: 780px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+            transition: 0.2s;
+        }
+        h1 {
+            font-weight: 600;
+            font-size: 2.2rem;
+            color: #f0f6ff;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.2rem;
+        }
+        .sub {
+            color: #8899c7;
+            font-size: 0.95rem;
+            font-weight: 400;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 1rem;
+            margin-bottom: 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .stats {
+            display: flex;
+            gap: 1.8rem;
+            flex-wrap: wrap;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.6rem 1.6rem;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+        }
+        .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 0.3rem;
+            color: #b6c8f0;
+            font-size: 0.9rem;
+        }
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: white;
+            font-variant-numeric: tabular-nums;
+        }
+        .text-display {
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 2rem;
+            padding: 1.8rem 2rem;
+            margin: 1.2rem 0 1.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.3);
+            min-height: 110px;
+            display: flex;
+            align-items: center;
+            font-size: 1.4rem;
+            line-height: 1.6;
+            letter-spacing: 0.3px;
+            color: #dbe4ff;
+            font-weight: 400;
+            flex-wrap: wrap;
+            word-break: break-word;
+        }
+        .char-correct {
+            color: #7dffb3;
+            background: rgba(125, 255, 179, 0.12);
+            border-radius: 4px;
+        }
+        .char-incorrect {
+            color: #ff7a7a;
+            background: rgba(255, 80, 80, 0.15);
+            border-radius: 4px;
+            text-decoration: underline wavy #ff7a7a 1px;
+        }
+        .char-current {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            padding: 0 2px;
+            border-left: 2px solid #9bbaff;
+            animation: blinkCursor 0.9s step-end infinite;
+        }
+        @keyframes blinkCursor {
+            0%, 100% { border-color: #9bbaff; }
+            50% { border-color: transparent; }
+        }
+        .char-pending {
+            color: #a5b9e6;
+        }
+        .input-area {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin: 1.2rem 0 0.8rem;
+        }
+        #typingInput {
+            flex: 1;
+            padding: 1rem 1.8rem;
+            border-radius: 60px;
+            border: none;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(4px);
+            font-size: 1.1rem;
+            color: white;
+            outline: 1px solid rgba(255, 255, 255, 0.08);
+            transition: 0.15s;
+            min-width: 160px;
+            font-family: 'Inter', monospace;
+        }
+        #typingInput:focus {
+            outline: 2px solid #6d8cff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        #typingInput::placeholder {
+            color: #62719b;
+            font-weight: 300;
+        }
+        .btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            padding: 0.7rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 500;
+            font-size: 1rem;
+            color: #d2ddff;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-primary {
+            background: #4a6cff;
+            color: white;
+            box-shadow: 0 6px 0 #1f3a9e;
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #5c7aff;
+            transform: scale(1.01);
+        }
+        .btn-primary:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #1f3a9e;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(0.5);
+        }
+        .reset-group {
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+        }
+        .footer-hint {
+            margin-top: 1.6rem;
+            font-size: 0.85rem;
+            color: #6274a3;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            padding-top: 1.4rem;
+        }
+        @media (max-width: 550px) {
+            .card { padding: 1.8rem 1.2rem; }
+            .text-display { font-size: 1.1rem; padding: 1.2rem; }
+            .stats { gap: 1rem; padding: 0.4rem 1.2rem; }
+            .stat-value { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>⌨️ type<span style="font-weight:300;color:#8a9ed6;">.</span>speed</h1>
+        <div class="sub">
+            <span>📝 copy the text below</span>
+            <div class="stats">
+                <span class="stat-item">⏱️ <span class="stat-value" id="timerDisplay">0</span>s</span>
+                <span class="stat-item">⚡ <span class="stat-value" id="wpmDisplay">0</span> WPM</span>
+                <span class="stat-item">🎯 <span class="stat-value" id="accuracyDisplay">100</span>%</span>
+            </div>
+        </div>
+
+        <!-- text to type -->
+        <div class="text-display" id="textDisplay" aria-label="text to type"></div>
+
+        <!-- input + controls -->
+        <div class="input-area">
+            <input type="text" id="typingInput" placeholder="start typing here..." autofocus spellcheck="false" autocomplete="off" />
+            <div class="reset-group">
+                <button class="btn" id="resetBtn">⟳ reset</button>
+                <button class="btn btn-primary" id="newTextBtn">✎ new text</button>
+            </div>
+        </div>
+
+        <div class="footer-hint">
+            ⏱️ timer starts on first keystroke · finish the text to see your score
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ---------- DOM ----------
+            const textDisplay = document.getElementById('textDisplay');
+            const typingInput = document.getElementById('typingInput');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const wpmDisplay = document.getElementById('wpmDisplay');
+            const accuracyDisplay = document.getElementById('accuracyDisplay');
+            const resetBtn = document.getElementById('resetBtn');
+            const newTextBtn = document.getElementById('newTextBtn');
+
+            // ---------- text samples ----------
+            const SAMPLE_TEXTS = [
+                "The quick brown fox jumps over the lazy dog.",
+                "JavaScript is the language of the web and it is everywhere.",
+                "Typing speed is measured in words per minute or WPM.",
+                "Practice makes perfect, so keep typing every day.",
+                "A simple project can teach you a lot about programming logic.",
+                "Consistency and patience are the keys to mastering any skill.",
+                "The sun set behind the mountains and painted the sky in gold.",
+                "Every great developer starts with a single line of code."
+            ];
+
+            // ---------- state ----------
+            let currentText = '';
+            let typedChars = [];             // array of char status: 'correct' | 'incorrect' | 'pending'
+            let startTime = null;            // performance.now() when first char typed
+            let timerInterval = null;
+            let isFinished = false;
+            let isTimerRunning = false;
+
+            // ---------- helpers ----------
+            function pickRandomText() {
+                return SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
+            }
+
+            // reset everything (preserve new text generation)
+            function fullReset(newText = null) {
+                // stop timer
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                isTimerRunning = false;
+                startTime = null;
+                isFinished = false;
+
+                // set new text
+                currentText = (newText !== null) ? newText : pickRandomText();
+                // reset typed status: all pending
+                typedChars = new Array(currentText.length).fill('pending');
+
+                // render
+                renderTextDisplay();
+                typingInput.value = '';
+                typingInput.disabled = false;
+                typingInput.focus();
+
+                // reset stats
+                timerDisplay.textContent = '0';
+                wpmDisplay.textContent = '0';
+                accuracyDisplay.textContent = '100';
+            }
+
+            // render the text with spans for each character status
+            function renderTextDisplay() {
+                let html = '';
+                for (let i = 0; i < currentText.length; i++) {
+                    const char = currentText[i];
+                    let cls = 'char-pending';
+                    if (typedChars[i] === 'correct') cls = 'char-correct';
+                    else if (typedChars[i] === 'incorrect') cls = 'char-incorrect';
+                    // current cursor: only if not finished and i === typed length
+                    if (i === typedChars.length && !isFinished) {
+                        cls += ' char-current';
+                    }
+                    // special handling for spaces: keep them visible
+                    const displayChar = char === ' ' ? '&nbsp;' : char;
+                    html += `<span class="${cls}">${displayChar}</span>`;
+                }
+                // if finished, no cursor
+                if (isFinished) {
+                    // remove any char-current from last char (just in case)
+                    // we'll just render normally
+                }
+                textDisplay.innerHTML = html;
+            }
+
+            // calculate and update WPM + accuracy
+            function updateStats() {
+                if (!startTime) return;
+
+                const elapsedSeconds = (performance.now() - startTime) / 1000;
+                if (elapsedSeconds < 0.5) {
+                    // avoid crazy numbers at start
+                    timerDisplay.textContent = '0';
+                    return;
+                }
+                timerDisplay.textContent = Math.floor(elapsedSeconds);
+
+                // count correct and incorrect
+                let correct = 0;
+                let incorrect = 0;
+                let typedCount = 0;
+                for (let i = 0; i < typedChars.length; i++) {
+                    if (typedChars[i] === 'correct') { correct++; typedCount++; }
+                    else if (typedChars[i] === 'incorrect') { incorrect++; typedCount++; }
+                }
+                // accuracy
+                const totalTyped = correct + incorrect;
+                const accuracy = totalTyped === 0 ? 100 : Math.round((correct / totalTyped) * 100);
+                accuracyDisplay.textContent = accuracy;
+
+                // WPM: (correct chars / 5) / minutes
+                const minutes = elapsedSeconds / 60;
+                const rawWpm = minutes > 0 ? (correct / 5) / minutes : 0;
+                wpmDisplay.textContent = Math.round(rawWpm);
+            }
+
+            // check if text is fully typed
+            function checkCompletion() {
+                if (isFinished) return true;
+                // all chars must be 'correct' or 'incorrect' (no 'pending')
+                const allTyped = typedChars.every(status => status !== 'pending');
+                if (allTyped) {
+                    // finish the test
+                    isFinished = true;
+                    typingInput.disabled = true;
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        isTimerRunning = false;
+                    }
+                    // update stats one final time
+                    updateStats();
+                    renderTextDisplay(); // removes cursor
+                    return true;
+                }
+                return false;
+            }
+
+            // handle input from user
+            function handleTyping(inputValue) {
+                if (isFinished) {
+                    // if finished, ignore typing (but we can reset)
+                    return;
+                }
+
+                // if input is empty, reset typedChars (backspace all)
+                if (inputValue.length === 0) {
+                    typedChars = new Array(currentText.length).fill('pending');
+                    renderTextDisplay();
+                    // reset timer if no chars typed
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        isTimerRunning = false;
+                        startTime = null;
+                        timerDisplay.textContent = '0';
+                        wpmDisplay.textContent = '0';
+                        accuracyDisplay.textContent = '100';
+                    }
+                    return;
+                }
+
+                // start timer on first keystroke (if not started and not finished)
+                if (!isTimerRunning && !isFinished && inputValue.length > 0) {
+                    startTime = performance.now();
+                    isTimerRunning = true;
+                    timerInterval = setInterval(() => {
+                        if (!isFinished) {
+                            updateStats();
+                        } else {
+                            if (timerInterval) clearInterval(timerInterval);
+                        }
+                    }, 200);
+                }
+
+                // compare input with currentText up to input length
+                const typedLength = inputValue.length;
+                // reset all to 'pending' first
+                typedChars = new Array(currentText.length).fill('pending');
+
+                // fill status for typed characters
+                for (let i = 0; i < typedLength && i < currentText.length; i++) {
+                    const expected = currentText[i];
+                    const actual = inputValue[i];
+                    if (actual === expected) {
+                        typedChars[i] = 'correct';
+                    } else {
+                        typedChars[i] = 'incorrect';
+                    }
+                }
+
+                // if input is longer than text, ignore extra (but we trim in input)
+                // update display
+                renderTextDisplay();
+
+                // update stats (if timer running)
+                if (isTimerRunning) {
+                    updateStats();
+                }
+
+                // check if finished
+                const completed = checkCompletion();
+                if (completed) {
+                    // final stats update
+                    updateStats();
+                    renderTextDisplay();
+                    // show finish message
+                }
+            }
+
+            // ---------- event listeners ----------
+            typingInput.addEventListener('input', function(e) {
+                const val = this.value;
+                // limit input length to text length (prevent overflow)
+                if (val.length > currentText.length) {
+                    this.value = val.slice(0, currentText.length);
+                }
+                handleTyping(this.value);
+            });
+
+            // reset button: reset current text
+            resetBtn.addEventListener('click', function() {
+                fullReset(currentText); // keep same text
+                typingInput.focus();
+            });
+
+            // new text button: pick a random new text
+            newTextBtn.addEventListener('click', function() {
+                fullReset(pickRandomText());
+                typingInput.focus();
+            });
+
+            // also paste prevention: we want clean typing, but we allow paste (but we handle it)
+            typingInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                // optionally we could paste, but we want clean typing experience
+                // we ignore paste
+            });
+
+            // keyboard shortcut: focus input on load
+            window.addEventListener('load', function() {
+                fullReset(pickRandomText());
+                typingInput.focus();
+            });
+
+            // manual focus on click on card
+            document.querySelector('.card').addEventListener('click', function(e) {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+                    typingInput.focus();
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎵 Audio Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0a1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 1rem;
+            overflow: hidden;
+        }
+        .container {
+            background: rgba(20, 20, 40, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            padding: 2.5rem 2rem;
+            max-width: 900px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
+        }
+        h1 {
+            font-weight: 700;
+            font-size: 2.2rem;
+            color: #f0f4ff;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.2rem;
+        }
+        .subhead {
+            color: #8899c7;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 1.2rem;
+            margin-bottom: 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .visualizer-wrapper {
+            position: relative;
+            background: #0a0a1a;
+            border-radius: 2rem;
+            overflow: hidden;
+            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            margin-bottom: 1.8rem;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 320px;
+            background: transparent;
+            cursor: pointer;
+        }
+        .controls {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            margin: 0.8rem 0 1.2rem;
+        }
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: #d2ddff;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .btn-primary {
+            background: #6c5ce7;
+            color: white;
+            box-shadow: 0 6px 0 #3d2c8a;
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #7d6ff0;
+            transform: scale(1.02);
+        }
+        .btn-primary:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #3d2c8a;
+        }
+        .btn-danger {
+            background: #e74c6f;
+            color: white;
+            box-shadow: 0 6px 0 #a12a44;
+            border: none;
+        }
+        .btn-danger:hover {
+            background: #ff5f7e;
+        }
+        .btn-danger:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #a12a44;
+        }
+        .btn:active:not(.btn-primary):not(.btn-danger) {
+            transform: scale(0.95);
+        }
+        .btn:disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .visualizer-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            padding: 0.6rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 60px;
+            margin-top: 0.6rem;
+        }
+        .stat-item {
+            color: #8899c7;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: baseline;
+            gap: 0.4rem;
+        }
+        .stat-value {
+            color: #dce5ff;
+            font-weight: 600;
+            font-size: 1rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .preset-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 0.4rem;
+        }
+        .preset-btn {
+            padding: 0.4rem 1.2rem;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            color: #8899c7;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+        .preset-btn.active {
+            background: #6c5ce7;
+            color: white;
+            border-color: #6c5ce7;
+        }
+        .footer-note {
+            margin-top: 1.4rem;
+            font-size: 0.8rem;
+            color: #3e5279;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 1rem;
+        }
+        @media (max-width: 550px) {
+            .container { padding: 1.5rem 1rem; }
+            canvas { height: 200px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 visualize</h1>
+        <div class="subhead">
+            <span>audio-reactive visuals</span>
+            <span id="trackName">no track loaded</span>
+        </div>
+
+        <div class="visualizer-wrapper">
+            <canvas id="visualizerCanvas"></canvas>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="playBtn">▶ Play</button>
+            <button class="btn" id="pauseBtn">⏸ Pause</button>
+            <button class="btn btn-danger" id="stopBtn">⏹ Stop</button>
+            <div class="file-input-wrapper">
+                <button class="btn">📁 Load Audio</button>
+                <input type="file" id="fileInput" accept="audio/*" />
+            </div>
+        </div>
+
+        <div class="preset-buttons">
+            <button class="preset-btn active" data-preset="bars">📊 Bars</button>
+            <button class="preset-btn" data-preset="wave">🌊 Wave</button>
+            <button class="preset-btn" data-preset="circle">⭕ Circle</button>
+            <button class="preset-btn" data-preset="particles">✨ Particles</button>
+        </div>
+
+        <div class="visualizer-stats">
+            <span class="stat-item">🎵 <span class="stat-value" id="frequencyStat">0</span> Hz</span>
+            <span class="stat-item">📊 <span class="stat-value" id="peakStat">0</span> dB</span>
+            <span class="stat-item">⏱️ <span class="stat-value" id="timeStat">0:00</span></span>
+        </div>
+
+        <div class="footer-note">
+            click canvas to toggle play · drop any audio file
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- DOM refs ----------
+            const canvas = document.getElementById('visualizerCanvas');
+            const ctx = canvas.getContext('2d');
+            const playBtn = document.getElementById('playBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const fileInput = document.getElementById('fileInput');
+            const trackName = document.getElementById('trackName');
+            const frequencyStat = document.getElementById('frequencyStat');
+            const peakStat = document.getElementById('peakStat');
+            const timeStat = document.getElementById('timeStat');
+            const presetBtns = document.querySelectorAll('.preset-btn');
+
+            // ---------- Audio setup ----------
+            let audioContext = null;
+            let analyser = null;
+            let source = null;
+            let audioBuffer = null;
+            let audioBufferSource = null;
+            let isPlaying = false;
+            let animationId = null;
+            let currentPreset = 'bars';
+            let dataArray = null;
+            let timeDataArray = null;
+
+            // canvas sizing
+            function resizeCanvas() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = canvas.clientWidth || rect.width || 800;
+                canvas.height = canvas.clientHeight || 320;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // ---------- Audio processing ----------
+            function initAudio() {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (!analyser) {
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = 512;
+                    analyser.smoothingTimeConstant = 0.8;
+                    dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    timeDataArray = new Uint8Array(analyser.frequencyBinCount);
+                }
+            }
+
+            function loadAudioFile(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        initAudio();
+                        const arrayBuffer = e.target.result;
+                        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                        trackName.textContent = file.name;
+                        // stop any current playback
+                        stopAudio();
+                        // create new source
+                        audioBufferSource = audioContext.createBufferSource();
+                        audioBufferSource.buffer = audioBuffer;
+                        audioBufferSource.connect(analyser);
+                        analyser.connect(audioContext.destination);
+                        // store reference
+                        source = audioBufferSource;
+                        // start playing
+                        playAudio();
+                    } catch (err) {
+                        console.error('Error loading audio:', err);
+                        alert('Could not load audio file. Please try another.');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            function playAudio() {
+                if (!audioContext || !source) {
+                    // if no source, try to resume with existing buffer
+                    if (audioBuffer && audioContext) {
+                        audioBufferSource = audioContext.createBufferSource();
+                        audioBufferSource.buffer = audioBuffer;
+                        audioBufferSource.connect(analyser);
+                        analyser.connect(audioContext.destination);
+                        source = audioBufferSource;
+                    } else {
+                        return;
+                    }
+                }
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                if (source) {
+                    source.start(0);
+                    isPlaying = true;
+                    playBtn.textContent = '▶ Playing';
+                    playBtn.disabled = true;
+                    pauseBtn.disabled = false;
+                    stopBtn.disabled = false;
+                    startVisualization();
+                }
+            }
+
+            function pauseAudio() {
+                if (!isPlaying) return;
+                if (audioContext && audioContext.state === 'running') {
+                    audioContext.suspend();
+                }
+                isPlaying = false;
+                playBtn.textContent = '▶ Resume';
+                playBtn.disabled = false;
+                pauseBtn.disabled = false;
+                // visualization continues but audio is paused
+            }
+
+            function stopAudio() {
+                if (source) {
+                    try { source.stop(); } catch (e) {}
+                    source = null;
+                    audioBufferSource = null;
+                }
+                isPlaying = false;
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+                playBtn.textContent = '▶ Play';
+                playBtn.disabled = false;
+                pauseBtn.disabled = true;
+                stopBtn.disabled = true;
+                // clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // reset stats
+                frequencyStat.textContent = '0';
+                peakStat.textContent = '0';
+                timeStat.textContent = '0:00';
+                // if audio context is suspended, resume? no, keep as is
+            }
+
+            // ---------- Visualization ----------
+            function startVisualization() {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                }
+                drawVisualization();
+            }
+
+            function drawVisualization() {
+                if (!analyser) return;
+
+                analyser.getByteFrequencyData(dataArray);
+                analyser.getByteTimeDomainData(timeDataArray);
+
+                const width = canvas.width;
+                const height = canvas.height;
+                ctx.clearRect(0, 0, width, height);
+
+                // update stats
+                let sum = 0;
+                let peak = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                    if (dataArray[i] > peak) peak = dataArray[i];
+                }
+                const avg = sum / dataArray.length;
+                frequencyStat.textContent = Math.round(avg * 0.8 + 20);
+                peakStat.textContent = Math.round((peak / 255) * 100);
+
+                // time
+                if (source && source.buffer) {
+                    const duration = source.buffer.duration;
+                    const currentTime = audioContext ? audioContext.currentTime : 0;
+                    const elapsed = Math.min(currentTime, duration);
+                    const mins = Math.floor(elapsed / 60);
+                    const secs = Math.floor(elapsed % 60);
+                    timeStat.textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+                }
+
+                // draw preset
+                switch (currentPreset) {
+                    case 'bars': drawBars(dataArray, width, height); break;
+                    case 'wave': drawWave(timeDataArray, width, height); break;
+                    case 'circle': drawCircle(dataArray, width, height); break;
+                    case 'particles': drawParticles(dataArray, width, height); break;
+                    default: drawBars(dataArray, width, height);
+                }
+
+                // continue loop if playing
+                if (isPlaying || audioContext?.state === 'suspended') {
+                    animationId = requestAnimationFrame(drawVisualization);
+                } else {
+                    // if not playing but visualization should continue (paused)
+                    // we keep it running but with static data? we'll keep animation going
+                    animationId = requestAnimationFrame(drawVisualization);
+                }
+            }
+
+            // ---------- Preset drawings ----------
+            function drawBars(data, w, h) {
+                const barWidth = w / data.length * 2.5;
+                let x = 0;
+                const gradient = ctx.createLinearGradient(0, 0, w, 0);
+                gradient.addColorStop(0, '#6c5ce7');
+                gradient.addColorStop(0.5, '#fd79a8');
+                gradient.addColorStop(1, '#00cec9');
+                for (let i = 0; i < data.length; i += 2) {
+                    const val = data[i] / 255;
+                    const barHeight = val * h * 0.9;
+                    ctx.fillStyle = gradient;
+                    ctx.shadowColor = '#6c5ce7';
+                    ctx.shadowBlur = 15;
+                    ctx.fillRect(x, h - barHeight, barWidth - 1, barHeight);
+                    ctx.shadowBlur = 0;
+                    x += barWidth;
+                }
+            }
+
+            function drawWave(data, w, h) {
+                ctx.beginPath();
+                ctx.strokeStyle = '#6c5ce7';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#6c5ce7';
+                ctx.shadowBlur = 20;
+                const step = w / data.length;
+                for (let i = 0; i < data.length; i++) {
+                    const val = (data[i] - 128) / 128;
+                    const y = h / 2 + val * h * 0.45;
+                    if (i === 0) ctx.moveTo(0, y);
+                    else ctx.lineTo(i * step, y);
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // mirror
+                ctx.beginPath();
+                ctx.strokeStyle = '#fd79a8';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = '#fd79a8';
+                ctx.shadowBlur = 15;
+                for (let i = 0; i < data.length; i++) {
+                    const val = (data[i] - 128) / 128;
+                    const y = h / 2 - val * h * 0.45;
+                    if (i === 0) ctx.moveTo(0, y);
+                    else ctx.lineTo(i * step, y);
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+
+            function drawCircle(data, w, h) {
+                const centerX = w / 2;
+                const centerY = h / 2;
+                const radius = Math.min(w, h) * 0.35;
+                const count = 60;
+                const angleStep = (Math.PI * 2) / count;
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 1.2);
+                gradient.addColorStop(0, '#6c5ce7');
+                gradient.addColorStop(0.5, '#fd79a8');
+                gradient.addColorStop(1, '#00cec9');
+
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep;
+                    const idx = Math.floor((i / count) * data.length);
+                    const val = data[idx] / 255;
+                    const r = radius + val * radius * 0.7;
+                    const x = centerX + Math.cos(angle) * r;
+                    const y = centerY + Math.sin(angle) * r;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4 + val * 12, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.shadowColor = '#6c5ce7';
+                    ctx.shadowBlur = 20;
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+
+                // center glow
+                const glow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 0.5);
+                glow.addColorStop(0, 'rgba(108, 92, 231, 0.3)');
+                glow.addColorStop(1, 'rgba(108, 92, 231, 0)');
+                ctx.fillStyle = glow;
+                ctx.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2);
+            }
+
+            function drawParticles(data, w, h) {
+                const count = 80;
+                const centerX = w / 2;
+                const centerY = h / 2;
+                const baseRadius = Math.min(w, h) * 0.3;
+
+                for (let i = 0; i < count; i++) {
+                    const angle = (i / count) * Math.PI * 2;
+                    const idx = Math.floor((i / count) * data.length);
+                    const val = data[idx] / 255;
+                    const r = baseRadius + val * baseRadius * 0.8;
+                    const x = centerX + Math.cos(angle + performance.now() / 2000) * r;
+                    const y = centerY + Math.sin(angle + performance.now() / 2000) * r;
+
+                    const size = 2 + val * 8;
+                    const hue = (i / count) * 360 + performance.now() / 50;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsl(${hue % 360}, 80%, 60%)`;
+                    ctx.shadowColor = `hsl(${hue % 360}, 80%, 60%)`;
+                    ctx.shadowBlur = 20;
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+
+                // center glow
+                const glow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, baseRadius * 0.6);
+                glow.addColorStop(0, 'rgba(108, 92, 231, 0.15)');
+                glow.addColorStop(1, 'rgba(108, 92, 231, 0)');
+                ctx.fillStyle = glow;
+                ctx.fillRect(centerX - baseRadius, centerY - baseRadius, baseRadius * 2, baseRadius * 2);
+            }
+
+            // ---------- Preset switching ----------
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    presetBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentPreset = this.dataset.preset;
+                    // restart visualization if running
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                        startVisualization();
+                    }
+                });
+            });
+
+            // ---------- Event listeners ----------
+            playBtn.addEventListener('click', () => {
+                if (!audioContext) initAudio();
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                if (!source && audioBuffer) {
+                    // recreate source
+                    audioBufferSource = audioContext.createBufferSource();
+                    audioBufferSource.buffer = audioBuffer;
+                    audioBufferSource.connect(analyser);
+                    analyser.connect(audioContext.destination);
+                    source = audioBufferSource;
+                    playAudio();
+                } else if (source) {
+                    playAudio();
+                } else {
+                    alert('Please load an audio file first.');
+                }
+            });
+
+            pauseBtn.addEventListener('click', pauseAudio);
+
+            stopBtn.addEventListener('click', () => {
+                stopAudio();
+                // reset time display
+                timeStat.textContent = '0:00';
+                frequencyStat.textContent = '0';
+                peakStat.textContent = '0';
+            });
+
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    loadAudioFile(this.files[0]);
+                }
+                this.value = ''; // allow re-upload same file
+            });
+
+            // click canvas to toggle play/pause
+            canvas.addEventListener('click', () => {
+                if (isPlaying) {
+                    pauseAudio();
+                } else {
+                    if (source || audioBuffer) {
+                        playBtn.click();
+                    } else {
+                        alert('Load an audio file first!');
+                    }
+                }
+            });
+
+            // drag and drop support
+            document.addEventListener('dragover', (e) => e.preventDefault());
+            document.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const files = e.dataTransfer.files;
+                if (files && files[0] && files[0].type.startsWith('audio/')) {
+                    loadAudioFile(files[0]);
+                }
+            });
+
+            // keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT') return;
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    if (isPlaying) pauseBtn.click();
+                    else playBtn.click();
+                }
+            });
+
+            // ---------- Init ----------
+            initAudio();
+            pauseBtn.disabled = true;
+            stopBtn.disabled = true;
+
+            // draw initial background
+            function drawInit() {
+                ctx.fillStyle = '#0a0a1a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#2a2a4a';
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('🎵 load a track to start', canvas.width / 2, canvas.height / 2 + 6);
+            }
+            drawInit();
+
+            // handle resize for canvas
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                if (!isPlaying && !animationId) {
+                    drawInit();
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>

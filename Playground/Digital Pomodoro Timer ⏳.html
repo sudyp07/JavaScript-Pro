@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🍅 Pomodoro Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            padding: 1.2rem;
+            color: #eaeef2;
+        }
+        .container {
+            background: #16213e;
+            border-radius: 3.5rem;
+            padding: 2.8rem 2.5rem;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        h1 {
+            font-weight: 600;
+            font-size: 2rem;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.2rem;
+        }
+        .subhead {
+            color: #8899c7;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 1.2rem;
+            margin-bottom: 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .mode-tabs {
+            display: flex;
+            gap: 0.6rem;
+            background: #0f1a2f;
+            padding: 0.35rem;
+            border-radius: 60px;
+            margin-bottom: 2rem;
+        }
+        .mode-tab {
+            flex: 1;
+            padding: 0.6rem 0.2rem;
+            border: none;
+            border-radius: 40px;
+            background: transparent;
+            color: #8899c7;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .mode-tab.active {
+            background: #2a3f6e;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 20, 40, 0.4);
+        }
+        .mode-tab:hover:not(.active) {
+            color: #d0dcff;
+        }
+        .timer-circle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 1.5rem 0 2rem;
+        }
+        .time-display {
+            font-size: 5.5rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 3px;
+            background: #0f1a2f;
+            padding: 0.4rem 2.2rem;
+            border-radius: 80px;
+            box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.4);
+            font-family: 'Fira Code', 'JetBrains Mono', monospace;
+            color: #c8d8ff;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            min-width: 250px;
+            text-align: center;
+        }
+        .session-label {
+            margin-top: 0.6rem;
+            font-size: 1rem;
+            color: #7a8bb8;
+            letter-spacing: 1px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #0f1a2f;
+            border-radius: 10px;
+            margin: 1rem 0 1.8rem;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #4a6cff, #7d9bff);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .control-group {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 0.8rem 0 1.8rem;
+        }
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: #d2ddff;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .btn-primary {
+            background: #4a6cff;
+            color: white;
+            box-shadow: 0 6px 0 #1f3a9e;
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #5c7aff;
+            transform: scale(1.02);
+        }
+        .btn-primary:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #1f3a9e;
+        }
+        .btn-danger {
+            background: #e74c6f;
+            color: white;
+            box-shadow: 0 6px 0 #a12a44;
+            border: none;
+        }
+        .btn-danger:hover {
+            background: #ff5f7e;
+        }
+        .btn-danger:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #a12a44;
+        }
+        .btn:active:not(.btn-primary):not(.btn-danger) {
+            transform: scale(0.95);
+        }
+        .btn:disabled {
+            opacity: 0.3;
+            pointer-events: none;
+            filter: grayscale(0.6);
+        }
+        .task-section {
+            margin-top: 1.8rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 1.5rem;
+        }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .task-header h3 {
+            font-weight: 500;
+            font-size: 1rem;
+            color: #b3c4f0;
+            letter-spacing: 0.3px;
+        }
+        .task-input-group {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        #taskInput {
+            flex: 1;
+            padding: 0.6rem 1.4rem;
+            border-radius: 60px;
+            border: none;
+            background: #0f1a2f;
+            color: white;
+            font-size: 0.95rem;
+            outline: 1px solid rgba(255, 255, 255, 0.05);
+            min-width: 140px;
+            font-family: 'Inter', sans-serif;
+        }
+        #taskInput:focus {
+            outline: 2px solid #4a6cff;
+        }
+        #taskInput::placeholder {
+            color: #54668f;
+        }
+        .task-list {
+            list-style: none;
+            margin-top: 0.8rem;
+            max-height: 160px;
+            overflow-y: auto;
+            padding-right: 0.3rem;
+        }
+        .task-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .task-list::-webkit-scrollbar-track {
+            background: #0f1a2f;
+            border-radius: 10px;
+        }
+        .task-list::-webkit-scrollbar-thumb {
+            background: #3a4f7a;
+            border-radius: 10px;
+        }
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.8rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 40px;
+            margin-bottom: 0.3rem;
+            border-left: 3px solid transparent;
+            transition: 0.1s;
+        }
+        .task-item.done {
+            border-left-color: #4ade80;
+            opacity: 0.5;
+        }
+        .task-item.done .task-text {
+            text-decoration: line-through;
+            color: #7a8bb8;
+        }
+        .task-text {
+            font-size: 0.95rem;
+            color: #dce5ff;
+            word-break: break-word;
+        }
+        .task-actions {
+            display: flex;
+            gap: 0.3rem;
+        }
+        .task-btn {
+            background: transparent;
+            border: none;
+            color: #7a8bb8;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 20px;
+            transition: 0.1s;
+        }
+        .task-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: white;
+        }
+        .task-btn.done-btn:hover {
+            color: #4ade80;
+        }
+        .task-btn.delete-btn:hover {
+            color: #ff7a7a;
+        }
+        .empty-tasks {
+            color: #54668f;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 0.8rem 0;
+        }
+        .footer-notes {
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: #3e5279;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 1.2rem;
+        }
+        @media (max-width: 520px) {
+            .container { padding: 1.8rem 1.2rem; }
+            .time-display { font-size: 3.8rem; min-width: 180px; padding: 0.3rem 1.2rem; }
+            .mode-tabs { gap: 0.3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍅 pomodoro</h1>
+        <div class="subhead">
+            <span>focus · break · repeat</span>
+            <span id="sessionCounter">sessions: 0</span>
+        </div>
+
+        <!-- mode tabs -->
+        <div class="mode-tabs">
+            <button class="mode-tab active" data-mode="focus">Focus</button>
+            <button class="mode-tab" data-mode="shortBreak">Short Break</button>
+            <button class="mode-tab" data-mode="longBreak">Long Break</button>
+        </div>
+
+        <!-- timer -->
+        <div class="timer-circle">
+            <div class="time-display" id="timerDisplay">25:00</div>
+            <div class="session-label" id="sessionLabel">⏳ focus time</div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width:100%"></div>
+        </div>
+
+        <!-- controls -->
+        <div class="control-group">
+            <button class="btn btn-primary" id="startBtn">▶ Start</button>
+            <button class="btn" id="pauseBtn">⏸ Pause</button>
+            <button class="btn" id="resetBtn">⟳ Reset</button>
+        </div>
+
+        <!-- tasks -->
+        <div class="task-section">
+            <div class="task-header">
+                <h3>📋 tasks</h3>
+                <div class="task-input-group">
+                    <input type="text" id="taskInput" placeholder="add a task..." maxlength="50" />
+                    <button class="btn" id="addTaskBtn" style="padding:0.6rem 1.2rem;">+ Add</button>
+                </div>
+            </div>
+            <ul class="task-list" id="taskList">
+                <li class="empty-tasks">no tasks yet · add one above</li>
+            </ul>
+        </div>
+        <div class="footer-notes">
+            ⏱️ focus: 25min · short break: 5min · long break: 15min
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- DOM refs ----------
+            const timerDisplay = document.getElementById('timerDisplay');
+            const progressFill = document.getElementById('progressFill');
+            const sessionLabel = document.getElementById('sessionLabel');
+            const sessionCounter = document.getElementById('sessionCounter');
+
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            const modeTabs = document.querySelectorAll('.mode-tab');
+            const taskInput = document.getElementById('taskInput');
+            const addTaskBtn = document.getElementById('addTaskBtn');
+            const taskList = document.getElementById('taskList');
+
+            // ---------- config ----------
+            const TIMES = {
+                focus: 25 * 60,
+                shortBreak: 5 * 60,
+                longBreak: 15 * 60,
+            };
+
+            // ---------- state ----------
+            let currentMode = 'focus';          // 'focus' | 'shortBreak' | 'longBreak'
+            let timeLeft = TIMES.focus;         // seconds
+            let maxTime = TIMES.focus;
+            let timerInterval = null;
+            let isRunning = false;
+            let sessionCount = 0;
+
+            // tasks
+            let tasks = [];                     // { id, text, done }
+
+            // ---------- helpers ----------
+            function formatTime(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+
+            function updateTimerDisplay() {
+                timerDisplay.textContent = formatTime(timeLeft);
+                const progress = maxTime > 0 ? (timeLeft / maxTime) * 100 : 0;
+                progressFill.style.width = `${progress}%`;
+            }
+
+            function updateSessionLabel() {
+                const labels = {
+                    focus: '⏳ focus time',
+                    shortBreak: '☕ short break',
+                    longBreak: '🧘 long break',
+                };
+                sessionLabel.textContent = labels[currentMode] || 'focus time';
+            }
+
+            function updateSessionCounter() {
+                sessionCounter.textContent = `sessions: ${sessionCount}`;
+            }
+
+            function switchMode(mode) {
+                // stop timer if running
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    isRunning = false;
+                }
+                currentMode = mode;
+                maxTime = TIMES[mode];
+                timeLeft = maxTime;
+                updateTimerDisplay();
+                updateSessionLabel();
+
+                // update active tab
+                modeTabs.forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.mode === mode);
+                });
+
+                // enable/disable start button
+                startBtn.disabled = false;
+                pauseBtn.disabled = false;
+            }
+
+            // timer tick
+            function tick() {
+                if (timeLeft <= 0) {
+                    // timer finished
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    isRunning = false;
+                    // if focus mode, increment session
+                    if (currentMode === 'focus') {
+                        sessionCount++;
+                        updateSessionCounter();
+                    }
+                    // optional: auto-switch to next break? we keep it simple — just stop.
+                    // play a subtle alert
+                    timerDisplay.textContent = '00:00';
+                    progressFill.style.width = '0%';
+                    // notify
+                    alert(`⏰ ${currentMode === 'focus' ? 'Focus' : 'Break'} session complete!`);
+                    startBtn.disabled = false;
+                    return;
+                }
+                timeLeft--;
+                updateTimerDisplay();
+            }
+
+            // ---------- timer controls ----------
+            function startTimer() {
+                if (isRunning) return;
+                if (timeLeft <= 0) {
+                    // if time is zero, reset to max for current mode
+                    timeLeft = maxTime;
+                    updateTimerDisplay();
+                }
+                isRunning = true;
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(tick, 1000);
+            }
+
+            function pauseTimer() {
+                if (!isRunning) return;
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isRunning = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = false;
+            }
+
+            function resetTimer() {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                isRunning = false;
+                timeLeft = maxTime;
+                updateTimerDisplay();
+                startBtn.disabled = false;
+                pauseBtn.disabled = false;
+            }
+
+            // ---------- tasks ----------
+            function renderTasks() {
+                if (tasks.length === 0) {
+                    taskList.innerHTML = '<li class="empty-tasks">no tasks yet · add one above</li>';
+                    return;
+                }
+                let html = '';
+                tasks.forEach(task => {
+                    const doneClass = task.done ? 'done' : '';
+                    const doneIcon = task.done ? '✅' : '⬜';
+                    html += `
+                        <li class="task-item ${doneClass}" data-id="${task.id}">
+                            <span class="task-text">${escapeHtml(task.text)}</span>
+                            <div class="task-actions">
+                                <button class="task-btn done-btn" data-action="toggle" title="toggle done">${doneIcon}</button>
+                                <button class="task-btn delete-btn" data-action="delete" title="delete">✕</button>
+                            </div>
+                        </li>
+                    `;
+                });
+                taskList.innerHTML = html;
+            }
+
+            // simple escape for XSS
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function addTask(text) {
+                const trimmed = text.trim();
+                if (!trimmed) return;
+                tasks.push({ id: Date.now() + Math.random() * 1000, text: trimmed, done: false });
+                renderTasks();
+                taskInput.value = '';
+                taskInput.focus();
+            }
+
+            function toggleTask(id) {
+                const task = tasks.find(t => t.id === id);
+                if (task) {
+                    task.done = !task.done;
+                    renderTasks();
+                }
+            }
+
+            function deleteTask(id) {
+                tasks = tasks.filter(t => t.id !== id);
+                renderTasks();
+            }
+
+            // handle task list clicks (event delegation)
+            taskList.addEventListener('click', function(e) {
+                const btn = e.target.closest('.task-btn');
+                if (!btn) return;
+                const li = btn.closest('.task-item');
+                if (!li) return;
+                const id = parseFloat(li.dataset.id);
+                const action = btn.dataset.action;
+                if (action === 'toggle') {
+                    toggleTask(id);
+                } else if (action === 'delete') {
+                    deleteTask(id);
+                }
+            });
+
+            // add task on button click or enter key
+            addTaskBtn.addEventListener('click', function() {
+                addTask(taskInput.value);
+            });
+            taskInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTask(this.value);
+                }
+            });
+
+            // ---------- mode tabs ----------
+            modeTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const mode = this.dataset.mode;
+                    if (mode === currentMode) return;
+                    // if timer running, pause first
+                    if (isRunning) {
+                        pauseTimer();
+                    }
+                    switchMode(mode);
+                });
+            });
+
+            // ---------- control buttons ----------
+            startBtn.addEventListener('click', startTimer);
+            pauseBtn.addEventListener('click', pauseTimer);
+            resetBtn.addEventListener('click', resetTimer);
+
+            // ---------- init ----------
+            function init() {
+                // set default mode
+                switchMode('focus');
+                updateSessionCounter();
+                // load any tasks (none by default)
+                renderTasks();
+                // extra: if timeLeft is 0, reset
+                resetTimer();
+            }
+
+            init();
+
+            // optional: handle window blur to keep timer accurate? not needed for simple project
+
+        })();
+    </script>
+</body>
+</html>

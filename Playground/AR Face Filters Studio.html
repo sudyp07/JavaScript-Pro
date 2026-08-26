@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎪 AR Face Filters Studio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a1a;
+            color: #dce5ff;
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            background: #0a0a1a;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            min-width: 300px;
+            background: rgba(20, 20, 40, 0.92);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 1.2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 100;
+            transition: 0.3s;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #3a4f7a;
+            border-radius: 10px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .sidebar-header span {
+            background: linear-gradient(135deg, #fd79a8, #6c5ce7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .camera-status {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: #54668f;
+            padding: 0.3rem 0.6rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 30px;
+            margin: 0.4rem 0;
+        }
+        .camera-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background: #e17055;
+        }
+        .camera-status .dot.active {
+            background: #00b894;
+            animation: blink 1s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .filter-section {
+            margin: 0.6rem 0;
+        }
+        .filter-section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #54668f;
+            margin-bottom: 0.4rem;
+        }
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.4rem;
+        }
+        .filter-btn {
+            padding: 0.4rem 0.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            color: #8899c7;
+            cursor: pointer;
+            transition: 0.15s;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.02);
+        }
+        .filter-btn.active {
+            border-color: #6c5ce7;
+            background: rgba(108, 92, 231, 0.15);
+            color: white;
+        }
+        .filter-btn .emoji {
+            font-size: 1.6rem;
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+        .filter-btn .label {
+            font-size: 0.6rem;
+        }
+
+        .controls-group {
+            margin: 0.4rem 0;
+        }
+        .controls-group label {
+            font-size: 0.75rem;
+            color: #8899c7;
+            display: flex;
+            justify-content: space-between;
+        }
+        .controls-group input[type="range"] {
+            width: 100%;
+            accent-color: #6c5ce7;
+            background: transparent;
+            cursor: pointer;
+            margin: 0.2rem 0;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.4rem;
+            margin: 0.4rem 0;
+        }
+        .action-btn {
+            padding: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            color: #dce5ff;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: 0.1s;
+            text-align: center;
+        }
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .action-btn.primary {
+            background: #6c5ce7;
+            border-color: #6c5ce7;
+            color: white;
+        }
+        .action-btn.primary:hover {
+            background: #7d6ff0;
+        }
+        .action-btn.danger {
+            background: #e17055;
+            border-color: #e17055;
+            color: white;
+        }
+        .action-btn.danger:hover {
+            background: #e74c6f;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.2rem 1.5rem;
+            gap: 0.8rem;
+            position: relative;
+            background: #0a0a1a;
+        }
+
+        .video-wrapper {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .video-wrapper video,
+        .video-wrapper canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transform: scaleX(-1);
+        }
+        .video-wrapper canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: scaleX(-1);
+        }
+
+        .watermark {
+            position: absolute;
+            bottom: 1rem;
+            right: 1.5rem;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.2);
+            pointer-events: none;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .countdown-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 4px 40px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .countdown-overlay.show {
+            opacity: 1;
+        }
+
+        .filter-indicator {
+            position: absolute;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.3rem 1.2rem;
+            border-radius: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .filter-indicator.show {
+            opacity: 1;
+        }
+
+        /* Face detection overlay */
+        .face-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                min-width: unset;
+                max-height: 45vh;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                padding: 0.8rem;
+            }
+            .main-content {
+                padding: 0.8rem;
+            }
+            .filter-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .action-buttons {
+                grid-template-columns: 1fr 1fr;
+            }
+            .countdown-overlay {
+                font-size: 5rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .filter-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .sidebar {
+                max-height: 50vh;
+            }
+        }
+
+        /* Share modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal-content {
+            background: rgba(20, 20, 40, 0.95);
+            border-radius: 2rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+        .modal-content img {
+            width: 100%;
+            border-radius: 1rem;
+            margin: 1rem 0;
+            max-height: 400px;
+            object-fit: contain;
+        }
+        .modal-content .close-modal {
+            float: right;
+            background: none;
+            border: none;
+            color: #54668f;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-content .close-modal:hover {
+            color: white;
+        }
+        .modal-content .share-buttons {
+            display: flex;
+            gap: 0.6rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .modal-content .share-buttons button {
+            padding: 0.5rem 1.2rem;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.1s;
+        }
+        .modal-content .share-buttons button:hover {
+            transform: scale(1.05);
+        }
+        .modal-content .share-buttons .copy-btn {
+            background: #6c5ce7;
+            color: white;
+        }
+        .modal-content .share-buttons .download-btn {
+            background: #00b894;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                🎪 <span>Face Filters</span>
+            </div>
+
+            <div class="camera-status">
+                <span class="dot" id="cameraDot"></span>
+                <span id="cameraStatus">Camera: Off</span>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">🎨 Filters</div>
+                <div class="filter-grid" id="filterGrid">
+                    <button class="filter-btn active" data-filter="none">
+                        <span class="emoji">😐</span>
+                        <span class="label">None</span>
+                    </button>
+                    <button class="filter-btn" data-filter="cat">
+                        <span class="emoji">🐱</span>
+                        <span class="label">Cat</span>
+                    </button>
+                    <button class="filter-btn" data-filter="dog">
+                        <span class="emoji">🐶</span>
+                        <span class="label">Dog</span>
+                    </button>
+                    <button class="filter-btn" data-filter="bunny">
+                        <span class="emoji">🐰</span>
+                        <span class="label">Bunny</span>
+                    </button>
+                    <button class="filter-btn" data-filter="glasses">
+                        <span class="emoji">👓</span>
+                        <span class="label">Glasses</span>
+                    </button>
+                    <button class="filter-btn" data-filter="hat">
+                        <span class="emoji">🎩</span>
+                        <span class="label">Hat</span>
+                    </button>
+                    <button class="filter-btn" data-filter="makeup">
+                        <span class="emoji">💄</span>
+                        <span class="label">Makeup</span>
+                    </button>
+                    <button class="filter-btn" data-filter="rainbow">
+                        <span class="emoji">🌈</span>
+                        <span class="label">Rainbow</span>
+                    </button>
+                    <button class="filter-btn" data-filter="glitch">
+                        <span class="emoji">💫</span>
+                        <span class="label">Glitch</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="controls-group">
+                <label>
+                    Filter Intensity
+                    <span id="intensityValue">100%</span>
+                </label>
+                <input type="range" id="intensitySlider" min="0" max="100" value="100" />
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn primary" id="captureBtn">📸 Capture</button>
+                <button class="action-btn" id="recordBtn">🔴 Record</button>
+                <button class="action-btn" id="countdownBtn">⏱️ Timer (3s)</button>
+                <button class="action-btn danger" id="resetBtn">🔄 Reset</button>
+            </div>
+
+            <div style="font-size:0.7rem;color:#54668f;text-align:center;margin-top:auto;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.03);">
+                🎯 Face tracking • Click filters to apply
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="video-wrapper" id="videoWrapper">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="outputCanvas"></canvas>
+                <canvas id="faceCanvas" class="face-overlay"></canvas>
+                <div class="filter-indicator" id="filterIndicator">🎨 None</div>
+                <div class="countdown-overlay" id="countdownOverlay">3</div>
+                <div class="watermark">🎪 Face Filters</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal-overlay" id="shareModal">
+        <div class="modal-content">
+            <button class="close-modal" id="closeShareModal">✕</button>
+            <h2>📸 Captured!</h2>
+            <img id="capturedImage" src="" alt="Captured" />
+            <div class="share-buttons">
+                <button class="download-btn" id="downloadBtn">💾 Download</button>
+                <button class="copy-btn" id="copyBtn">📋 Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- DOM refs ----------
+            const video = document.getElementById('video');
+            const outputCanvas = document.getElementById('outputCanvas');
+            const faceCanvas = document.getElementById('faceCanvas');
+            const ctx = outputCanvas.getContext('2d');
+            const faceCtx = faceCanvas.getContext('2d');
+            const filterIndicator = document.getElementById('filterIndicator');
+            const countdownOverlay = document.getElementById('countdownOverlay');
+            const cameraDot = document.getElementById('cameraDot');
+            const cameraStatus = document.getElementById('cameraStatus');
+            const intensitySlider = document.getElementById('intensitySlider');
+            const intensityValue = document.getElementById('intensityValue');
+            const captureBtn = document.getElementById('captureBtn');
+            const recordBtn = document.getElementById('recordBtn');
+            const countdownBtn = document.getElementById('countdownBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const shareModal = document.getElementById('shareModal');
+            const closeShareModal = document.getElementById('closeShareModal');
+            const capturedImage = document.getElementById('capturedImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const copyBtn = document.getElementById('copyBtn');
+
+            // ---------- State ----------
+            let currentFilter = 'none';
+            let intensity = 1.0;
+            let isStreaming = false;
+            let isRecording = false;
+            let mediaRecorder = null;
+            let recordedChunks = [];
+            let animationId = null;
+            let countdownTimer = null;
+            let countdownValue = 3;
+
+            // Face detection state
+            let faceDetected = false;
+            let faceLandmarks = null;
+            let faceRect = null;
+
+            // ---------- Camera ----------
+            async function startCamera() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            width: { ideal: 640 },
+                            height: { ideal: 480 },
+                            facingMode: 'user'
+                        },
+                        audio: false
+                    });
+                    video.srcObject = stream;
+                    await video.play();
+
+                    // Set canvas sizes
+                    const rect = video.getBoundingClientRect();
+                    outputCanvas.width = video.videoWidth || 640;
+                    outputCanvas.height = video.videoHeight || 480;
+                    faceCanvas.width = video.videoWidth || 640;
+                    faceCanvas.height = video.videoHeight || 480;
+
+                    isStreaming = true;
+                    cameraDot.className = 'dot active';
+                    cameraStatus.textContent = 'Camera: Active';
+                    startFaceDetection();
+
+                    // Start render loop
+                    renderLoop();
+
+                } catch (error) {
+                    console.error('Camera error:', error);
+                    cameraStatus.textContent = 'Camera: Error - ' + error.message;
+                    cameraDot.className = 'dot inactive';
+                }
+            }
+
+            // ---------- Face Detection (simulated with fallback) ----------
+            // In a real implementation, you'd use MediaPipe FaceMesh
+            // This is a simulation with random face-like features for demo
+
+            let facePoints = [];
+            let faceAngle = 0;
+            let faceScale = 1;
+
+            function startFaceDetection() {
+                // Simulate face detection with random movement
+                setInterval(() => {
+                    if (!isStreaming) return;
+
+                    // Simulate face tracking with smooth movement
+                    const w = outputCanvas.width;
+                    const h = outputCanvas.height;
+
+                    // Random walk for face position
+                    if (!faceRect) {
+                        faceRect = {
+                            x: w * 0.3 + Math.random() * 0.4 * w,
+                            y: h * 0.2 + Math.random() * 0.4 * h,
+                            width: w * 0.3 + Math.random() * 0.2 * w,
+                            height: h * 0.4 + Math.random() * 0.2 * h
+                        };
+                    } else {
+                        faceRect.x += (Math.random() - 0.5) * 4;
+                        faceRect.y += (Math.random() - 0.5) * 3;
+                        faceRect.width += (Math.random() - 0.5) * 2;
+                        faceRect.height += (Math.random() - 0.5) * 2;
+
+                        // Clamp
+                        faceRect.x = Math.max(20, Math.min(w - faceRect.width - 20, faceRect.x));
+                        faceRect.y = Math.max(20, Math.min(h - faceRect.height - 20, faceRect.y));
+                        faceRect.width = Math.max(60, Math.min(w * 0.5, faceRect.width));
+                        faceRect.height = Math.max(80, Math.min(h * 0.7, faceRect.height));
+                    }
+
+                    // Generate face landmarks (key points for features)
+                    const cx = faceRect.x + faceRect.width / 2;
+                    const cy = faceRect.y + faceRect.height / 2;
+                    const fw = faceRect.width;
+                    const fh = faceRect.height;
+
+                    // Eyes
+                    const eyeY = cy - fh * 0.15;
+                    const eyeSpacing = fw * 0.25;
+                    const leftEye = { x: cx - eyeSpacing, y: eyeY };
+                    const rightEye = { x: cx + eyeSpacing, y: eyeY };
+
+                    // Nose
+                    const nose = { x: cx, y: cy + fh * 0.1 };
+
+                    // Mouth
+                    const mouthY = cy + fh * 0.35;
+                    const mouthWidth = fw * 0.2;
+                    const mouth = {
+                        x: cx,
+                        y: mouthY,
+                        left: cx - mouthWidth,
+                        right: cx + mouthWidth
+                    };
+
+                    // Eyebrows
+                    const browY = cy - fh * 0.25;
+                    const leftBrow = { x: cx - eyeSpacing * 1.1, y: browY - 5 };
+                    const rightBrow = { x: cx + eyeSpacing * 1.1, y: browY - 5 };
+
+                    // Jaw/chin
+                    const chinY = cy + fh * 0.5;
+
+                    faceLandmarks = {
+                        leftEye,
+                        rightEye,
+                        nose,
+                        mouth,
+                        leftBrow,
+                        rightBrow,
+                        chin: { x: cx, y: chinY },
+                        leftCheek: { x: cx - fw * 0.3, y: cy + fh * 0.1 },
+                        rightCheek: { x: cx + fw * 0.3, y: cy + fh * 0.1 },
+                        forehead: { x: cx, y: cy - fh * 0.3 }
+                    };
+
+                    faceDetected = true;
+
+                }, 100);
+            }
+
+            // ---------- Filter Rendering ----------
+            function renderLoop() {
+                if (!isStreaming) return;
+
+                // Draw video frame
+                ctx.drawImage(video, 0, 0, outputCanvas.width, outputCanvas.height);
+
+                // Apply filters if face detected
+                if (faceDetected && faceLandmarks && currentFilter !== 'none') {
+                    applyFilter();
+                }
+
+                // Draw face mesh overlay (debug - optional)
+                if (faceDetected && faceLandmarks) {
+                    drawFaceMesh();
+                }
+
+                animationId = requestAnimationFrame(renderLoop);
+            }
+
+            function applyFilter() {
+                const w = outputCanvas.width;
+                const h = outputCanvas.height;
+                const intensityVal = intensity;
+
+                // Save current context state
+                ctx.save();
+
+                // Get face center and size
+                const cx = faceRect.x + faceRect.width / 2;
+                const cy = faceRect.y + faceRect.height / 2;
+                const fw = faceRect.width;
+                const fh = faceRect.height;
+
+                switch (currentFilter) {
+                    case 'cat':
+                        drawCatFilter(ctx, cx, cy, fw, fh, intensityVal);
+                        break;
+                    case 'dog':
+                        drawDogFilter(ctx, cx, cy, fw, fh, intensityVal);
+                        break;
+                    case 'bunny':
+                        drawBunnyFilter(ctx, cx, cy, fw, fh, intensityVal);
+                        break;
+                    case 'glasses':
+                        drawGlassesFilter(ctx, cx, cy, fw, fh, intensityVal);
+                        break;
+                    case 'hat':
+                        drawHatFilter(ctx, cx, cy, fw, fh, intensityVal);
+                        break;
+                    case 'makeup':
+                        drawMakeupFilter(ctx, cx, cy, fw, fh, intensityVal);
+                        break;
+                    case 'rainbow':
+                        drawRainbowFilter(ctx, w, h, intensityVal);
+                        break;
+                    case 'glitch':
+                        drawGlitchFilter(ctx, w, h, intensityVal);
+                        break;
+                }
+
+                ctx.restore();
+            }
+
+            // ---------- Filter Draw Functions ----------
+            function drawCatFilter(ctx, cx, cy, fw, fh, intensity) {
+                // Cat ears
+                const earSize = fw * 0.35 * intensity;
+                ctx.fillStyle = `rgba(0, 0, 0, ${0.8 * intensity})`;
+                ctx.beginPath();
+                ctx.moveTo(cx - fw * 0.3, cy - fh * 0.35);
+                ctx.lineTo(cx - fw * 0.5, cy - fh * 0.7);
+                ctx.lineTo(cx - fw * 0.1, cy - fh * 0.45);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(cx + fw * 0.3, cy - fh * 0.35);
+                ctx.lineTo(cx + fw * 0.5, cy - fh * 0.7);
+                ctx.lineTo(cx + fw * 0.1, cy - fh * 0.45);
+                ctx.fill();
+
+                // Inner ear (pink)
+                ctx.fillStyle = `rgba(255, 182, 193, ${0.6 * intensity})`;
+                ctx.beginPath();
+                ctx.moveTo(cx - fw * 0.28, cy - fh * 0.38);
+                ctx.lineTo(cx - fw * 0.42, cy - fh * 0.6);
+                ctx.lineTo(cx - fw * 0.18, cy - fh * 0.43);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(cx + fw * 0.28, cy - fh * 0.38);
+                ctx.lineTo(cx + fw * 0.42, cy - fh * 0.6);
+                ctx.lineTo(cx + fw * 0.18, cy - fh * 0.43);
+                ctx.fill();
+
+                // Nose (pink triangle)
+                ctx.fillStyle = `rgba(255, 182, 193, ${0.9 * intensity})`;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy + fh * 0.1);
+                ctx.lineTo(cx - fw * 0.06, cy + fh * 0.16);
+                ctx.lineTo(cx + fw * 0.06, cy + fh * 0.16);
+                ctx.fill();
+
+                // Whiskers
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 * intensity})`;
+                ctx.lineWidth = 1.5;
+                for (let side = -1; side <= 1; side += 2) {
+                    const wx = cx + side * fw * 0.15;
+                    const wy = cy + fh * 0.12;
+                    ctx.beginPath();
+                    ctx.moveTo(wx, wy);
+                    ctx.lineTo(wx + side * fw * 0.3, wy - fh * 0.08);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(wx, wy);
+                    ctx.lineTo(wx + side * fw * 0.35, wy + fh * 0.02);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(wx, wy);
+                    ctx.lineTo(wx + side * fw * 0.3, wy + fh * 0.12);
+                    ctx.stroke();
+                }
+
+                // Draw cat eyes (anime style)
+                drawEyes(ctx, cx, cy, fw, fh, intensity, '#ffd93d');
+            }
+
+            function drawDogFilter(ctx, cx, cy, fw, fh, intensity) {
+                // Dog ears (floppy)
+                const earSize = fw * 0.4 * intensity;
+                ctx.fillStyle = `rgba(139, 69, 19, ${0.8 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx - fw * 0.4, cy - fh * 0.2, earSize * 0.6, earSize * 0.8, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(cx + fw * 0.4, cy - fh * 0.2, earSize * 0.6, earSize * 0.8, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Nose (big black)
+                ctx.fillStyle = `rgba(0, 0, 0, ${0.9 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy + fh * 0.12, fw * 0.08, fw * 0.06, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Tongue
+                ctx.fillStyle = `rgba(255, 100, 100, ${0.6 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy + fh * 0.25, fw * 0.06, fw * 0.1, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eyes
+                drawEyes(ctx, cx, cy, fw, fh, intensity, '#4a4a4a');
+            }
+
+            function drawBunnyFilter(ctx, cx, cy, fw, fh, intensity) {
+                // Bunny ears
+                const earWidth = fw * 0.12;
+                const earHeight = fh * 0.6 * intensity;
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * intensity})`;
+                // Left ear
+                ctx.beginPath();
+                ctx.ellipse(cx - fw * 0.15, cy - fh * 0.35, earWidth, earHeight, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+                // Right ear
+                ctx.beginPath();
+                ctx.ellipse(cx + fw * 0.15, cy - fh * 0.35, earWidth, earHeight, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Inner ear (pink)
+                ctx.fillStyle = `rgba(255, 182, 193, ${0.6 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx - fw * 0.15, cy - fh * 0.35, earWidth * 0.5, earHeight * 0.7, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(cx + fw * 0.15, cy - fh * 0.35, earWidth * 0.5, earHeight * 0.7, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Nose (pink)
+                ctx.fillStyle = `rgba(255, 182, 193, ${0.9 * intensity})`;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy + fh * 0.1);
+                ctx.lineTo(cx - fw * 0.05, cy + fh * 0.15);
+                ctx.lineTo(cx + fw * 0.05, cy + fh * 0.15);
+                ctx.fill();
+
+                // Whiskers
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 * intensity})`;
+                ctx.lineWidth = 1;
+                for (let side = -1; side <= 1; side += 2) {
+                    const wx = cx + side * fw * 0.12;
+                    const wy = cy + fh * 0.12;
+                    ctx.beginPath();
+                    ctx.moveTo(wx, wy);
+                    ctx.lineTo(wx + side * fw * 0.25, wy - fh * 0.06);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(wx, wy);
+                    ctx.lineTo(wx + side * fw * 0.28, wy + fh * 0.04);
+                    ctx.stroke();
+                }
+
+                // Eyes (anime)
+                drawEyes(ctx, cx, cy, fw, fh, intensity, '#ff6b6b');
+            }
+
+            function drawGlassesFilter(ctx, cx, cy, fw, fh, intensity) {
+                // Frame
+                ctx.strokeStyle = `rgba(0, 0, 0, ${0.8 * intensity})`;
+                ctx.lineWidth = 3 * intensity;
+
+                // Left lens
+                ctx.beginPath();
+                ctx.ellipse(cx - fw * 0.2, cy - fh * 0.05, fw * 0.18, fh * 0.12, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                // Right lens
+                ctx.beginPath();
+                ctx.ellipse(cx + fw * 0.2, cy - fh * 0.05, fw * 0.18, fh * 0.12, 0, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Bridge
+                ctx.beginPath();
+                ctx.moveTo(cx - fw * 0.08, cy - fh * 0.05);
+                ctx.lineTo(cx + fw * 0.08, cy - fh * 0.05);
+                ctx.stroke();
+
+                // Arms
+                ctx.beginPath();
+                ctx.moveTo(cx - fw * 0.38, cy - fh * 0.05);
+                ctx.lineTo(cx - fw * 0.48, cy - fh * 0.05 - fh * 0.02);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cx + fw * 0.38, cy - fh * 0.05);
+                ctx.lineTo(cx + fw * 0.48, cy - fh * 0.05 - fh * 0.02);
+                ctx.stroke();
+
+                // Lens glare
+                ctx.fillStyle = `rgba(255, 255, 255, ${0.1 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx - fw * 0.23, cy - fh * 0.08, fw * 0.06, fh * 0.05, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(cx + fw * 0.17, cy - fh * 0.08, fw * 0.06, fh * 0.05, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function drawHatFilter(ctx, cx, cy, fw, fh, intensity) {
+                // Hat brim
+                ctx.fillStyle = `rgba(0, 0, 0, ${0.8 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy - fh * 0.3, fw * 0.5, fh * 0.08, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Hat top
+                ctx.fillStyle = `rgba(40, 40, 40, ${0.9 * intensity})`;
+                ctx.beginPath();
+                ctx.moveTo(cx - fw * 0.35, cy - fh * 0.3);
+                ctx.quadraticCurveTo(cx - fw * 0.35, cy - fh * 0.7, cx, cy - fh * 0.7);
+                ctx.quadraticCurveTo(cx + fw * 0.35, cy - fh * 0.7, cx + fw * 0.35, cy - fh * 0.3);
+                ctx.fill();
+
+                // Hat band
+                ctx.fillStyle = `rgba(108, 92, 231, ${0.7 * intensity})`;
+                ctx.fillRect(cx - fw * 0.33, cy - fh * 0.35, fw * 0.66, fh * 0.04);
+
+                // Hat highlight
+                ctx.fillStyle = `rgba(255, 255, 255, ${0.1 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx - fw * 0.1, cy - fh * 0.55, fw * 0.1, fh * 0.15, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function drawMakeupFilter(ctx, cx, cy, fw, fh, intensity) {
+                // Blush
+                ctx.fillStyle = `rgba(255, 150, 150, ${0.3 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx - fw * 0.3, cy + fh * 0.15, fw * 0.15, fh * 0.1, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(cx + fw * 0.3, cy + fh * 0.15, fw * 0.15, fh * 0.1, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Lipstick
+                ctx.fillStyle = `rgba(220, 20, 60, ${0.8 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy + fh * 0.3, fw * 0.1, fh * 0.04, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(cx, cy + fh * 0.32, fw * 0.08, fh * 0.03, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eyeshadow
+                ctx.fillStyle = `rgba(108, 92, 231, ${0.4 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx - fw * 0.2, cy - fh * 0.08, fw * 0.1, fh * 0.06, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(cx + fw * 0.2, cy - fh * 0.08, fw * 0.1, fh * 0.06, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eyeliner
+                ctx.strokeStyle = `rgba(0, 0, 0, ${0.6 * intensity})`;
+                ctx.lineWidth = 2 * intensity;
+                ctx.beginPath();
+                ctx.arc(cx - fw * 0.18, cy - fh * 0.05, fw * 0.1, -Math.PI * 1.2, -Math.PI * 0.8);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(cx + fw * 0.18, cy - fh * 0.05, fw * 0.1, -Math.PI * 1.2, -Math.PI * 0.8);
+                ctx.stroke();
+            }
+
+            function drawRainbowFilter(ctx, w, h, intensity) {
+                // Rainbow overlay with gradient
+                const gradient = ctx.createLinearGradient(0, 0, w, h);
+                gradient.addColorStop(0, `rgba(255, 0, 0, ${0.3 * intensity})`);
+                gradient.addColorStop(0.17, `rgba(255, 165, 0, ${0.3 * intensity})`);
+                gradient.addColorStop(0.33, `rgba(255, 255, 0, ${0.3 * intensity})`);
+                gradient.addColorStop(0.5, `rgba(0, 255, 0, ${0.3 * intensity})`);
+                gradient.addColorStop(0.67, `rgba(0, 0, 255, ${0.3 * intensity})`);
+                gradient.addColorStop(0.83, `rgba(75, 0, 130, ${0.3 * intensity})`);
+                gradient.addColorStop(1, `rgba(238, 130, 238, ${0.3 * intensity})`);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, w, h);
+
+                // Sparkles
+                const numSparkles = 20 * intensity;
+                for (let i = 0; i < numSparkles; i++) {
+                    const x = Math.random() * w;
+                    const y = Math.random() * h;
+                    const size = 2 + Math.random() * 4;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${0.5 * intensity})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Cross sparkle
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * intensity})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x - size * 2, y);
+                    ctx.lineTo(x + size * 2, y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - size * 2);
+                    ctx.lineTo(x, y + size * 2);
+                    ctx.stroke();
+                }
+            }
+
+            function drawGlitchFilter(ctx, w, h, intensity) {
+                // Glitch effect with random offsets
+                const glitchStrength = 10 * intensity;
+
+                // Extract image data
+                const imageData = ctx.getImageData(0, 0, w, h);
+                const data = imageData.data;
+
+                // Apply glitch
+                for (let y = 0; y < h; y += 4) {
+                    if (Math.random() < 0.1 * intensity) {
+                        const offset = (Math.random() - 0.5) * glitchStrength * 2;
+                        const rowStart = y * w * 4;
+                        const rowEnd = rowStart + w * 4;
+                        // Shift row
+                        const temp = new Uint8ClampedArray(data.slice(rowStart, rowEnd));
+                        const shift = Math.floor(offset);
+                        if (shift > 0) {
+                            data.set(temp.slice(shift * 4), rowStart);
+                            data.set(temp.slice(0, shift * 4), rowEnd - shift * 4);
+                        } else if (shift < 0) {
+                            const absShift = Math.abs(shift);
+                            data.set(temp.slice(0, -absShift * 4), rowStart + absShift * 4);
+                            data.set(temp.slice(-absShift * 4), rowStart);
+                        }
+                    }
+
+                    // Color shift
+                    if (Math.random() < 0.05 * intensity) {
+                        const rowStart = y * w * 4;
+                        for (let x = 0; x < w * 4; x += 4) {
+                            const idx = rowStart + x;
+                            const r = data[idx];
+                            const g = data[idx + 1];
+                            const b = data[idx + 2];
+                            data[idx] = b;
+                            data[idx + 2] = r;
+                        }
+                    }
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+
+                // Scan lines
+                for (let y = 0; y < h; y += 3) {
+                    if (Math.random() < 0.3 * intensity) {
+                        ctx.fillStyle = `rgba(0, 0, 0, ${0.1 * intensity})`;
+                        ctx.fillRect(0, y, w, 1);
+                    }
+                }
+            }
+
+            // Helper: Draw anime-style eyes
+            function drawEyes(ctx, cx, cy, fw, fh, intensity, color) {
+                const eyeSize = fw * 0.1;
+                const eyeY = cy - fh * 0.05;
+
+                // Eye whites
+                ctx.fillStyle = `rgba(255, 255, 255, ${0.95 * intensity})`;
+                ctx.beginPath();
+                ctx.ellipse(cx - fw * 0.2, eyeY, eyeSize * 1.4, eyeSize * 1.2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(cx + fw * 0.2, eyeY, eyeSize * 1.4, eyeSize * 1.2, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Iris
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(cx - fw * 0.2, eyeY, eyeSize * 0.8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cx + fw * 0.2, eyeY, eyeSize * 0.8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pupils
+                ctx.fillStyle = `rgba(0, 0, 0, ${0.9 * intensity})`;
+                ctx.beginPath();
+                ctx.arc(cx - fw * 0.18, eyeY + 2, eyeSize * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cx + fw * 0.22, eyeY + 2, eyeSize * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eye highlights
+                ctx.fillStyle = `rgba(255, 255, 255, ${0.7 * intensity})`;
+                ctx.beginPath();
+                ctx.arc(cx - fw * 0.23, eyeY - 4, eyeSize * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cx + fw * 0.17, eyeY - 4, eyeSize * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eyelashes (top)
+                ctx.strokeStyle = `rgba(0, 0, 0, ${0.5 * intensity})`;
+                ctx.lineWidth = 1.5;
+                for (let side = -1; side <= 1; side += 2) {
+                    const ex = cx + side * fw * 0.2;
+                    for (let i = -3; i <= 3; i++) {
+                        const angle = i * 0.15;
+                        ctx.beginPath();
+                        ctx.moveTo(ex + Math.sin(angle) * eyeSize * 0.6, eyeY - Math.cos(angle) * eyeSize * 0.8);
+                        ctx.lineTo(ex + Math.sin(angle) * eyeSize * 1.2, eyeY - Math.cos(angle) * eyeSize * 1.4 - 3);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // ---------- Face Mesh Drawing (debug/visual) ----------
+            function drawFaceMesh() {
+                if (!faceLandmarks) return;
+                faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+
+                // Draw face bounding box (subtle)
+                if (faceRect) {
+                    faceCtx.strokeStyle = 'rgba(108, 92, 231, 0.15)';
+                    faceCtx.lineWidth = 1;
+                    faceCtx.strokeRect(faceRect.x, faceRect.y, faceRect.width, faceRect.height);
+                }
+
+                // Draw landmarks
+                const pts = [
+                    'leftEye', 'rightEye', 'nose', 'mouth',
+                    'leftBrow', 'rightBrow', 'chin',
+                    'leftCheek', 'rightCheek', 'forehead'
+                ];
+                faceCtx.fillStyle = 'rgba(108, 92, 231, 0.3)';
+                for (const key of pts) {
+                    if (faceLandmarks[key]) {
+                        const p = faceLandmarks[key];
+                        if (key === 'mouth') {
+                            // Draw mouth as a curve
+                            faceCtx.strokeStyle = 'rgba(108, 92, 231, 0.2)';
+                            faceCtx.lineWidth = 1;
+                            faceCtx.beginPath();
+                            faceCtx.arc(p.x, p.y, 10, 0, Math.PI);
+                            faceCtx.stroke();
+                        } else {
+                            faceCtx.beginPath();
+                            faceCtx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                            faceCtx.fill();
+                        }
+                    }
+                }
+            }
+
+            // ---------- Capture ----------
+            function captureImage() {
+                // Draw the current frame with filters
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = outputCanvas.width;
+                tempCanvas.height = outputCanvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+
+                // Draw video with filters
+                tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                // Apply filters if needed (simplified)
+                if (currentFilter !== 'none' && faceDetected && faceLandmarks) {
+                    // We need to reapply the filter on the temp canvas
+                    // For simplicity, we'll just use the output canvas
+                    tempCtx.drawImage(outputCanvas, 0, 0);
+                }
+
+                const dataUrl = tempCanvas.toDataURL('image/png');
+                capturedImage.src = dataUrl;
+                shareModal.classList.add('show');
+            }
+
+            // ---------- Countdown ----------
+            function startCountdown() {
+                countdownValue = 3;
+                countdownOverlay.textContent = '3';
+                countdownOverlay.classList.add('show');
+
+                countdownTimer = setInterval(() => {
+                    countdownValue--;
+                    if (countdownValue > 0) {
+                        countdownOverlay.textContent = countdownValue;
+                    } else {
+                        clearInterval(countdownTimer);
+                        countdownOverlay.classList.remove('show');
+                        captureImage();
+                    }
+                }, 1000);
+            }
+
+            // ---------- Recording ----------
+            function toggleRecording() {
+                if (isRecording) {
+                    // Stop recording
+                    if (mediaRecorder) {
+                        mediaRecorder.stop();
+                        mediaRecorder = null;
+                    }
+                    isRecording = false;
+                    recordBtn.textContent = '🔴 Record';
+                    recordBtn.style.color = '';
+                    return;
+                }
+
+                // Start recording
+                const stream = outputCanvas.captureStream(30);
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'video/webm;codecs=vp9'
+                });
+
+                recordedChunks = [];
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        recordedChunks.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `filter-recording-${Date.now()}.webm`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    recordBtn.textContent = '🔴 Record';
+                    recordBtn.style.color = '';
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                recordBtn.textContent = '⏹️ Recording';
+                recordBtn.style.color = '#ff6b6b';
+            }
+
+            // ---------- Reset ----------
+            function resetFilters() {
+                currentFilter = 'none';
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-filter="none"]').classList.add('active');
+                filterIndicator.textContent = '🎨 None';
+                filterIndicator.classList.add('show');
+                setTimeout(() => filterIndicator.classList.remove('show'), 1500);
+            }
+
+            // ---------- Share functions ----------
+            function downloadImage() {
+                const link = document.createElement('a');
+                link.download = `filter-photo-${Date.now()}.png`;
+                link.href = capturedImage.src;
+                link.click();
+            }
+
+            async function copyImage() {
+                try {
+                    const response = await fetch(capturedImage.src);
+                    const blob = await response.blob();
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            [blob.type]: blob
+                        })
+                    ]);
+                    alert('📋 Image copied to clipboard!');
+                } catch (error) {
+                    console.error('Copy failed:', error);
+                    alert('Failed to copy. Try downloading instead.');
+                }
+            }
+
+            // ---------- Event Listeners ----------
+            // Filter selection
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+
+                    const filterNames = {
+                        none: 'None',
+                        cat: '🐱 Cat',
+                        dog: '🐶 Dog',
+                        bunny: '🐰 Bunny',
+                        glasses: '👓 Glasses',
+                        hat: '🎩 Hat',
+                        makeup: '💄 Makeup',
+                        rainbow: '🌈 Rainbow',
+                        glitch: '💫 Glitch'
+                    };
+                    filterIndicator.textContent = `🎨 ${filterNames[currentFilter] || currentFilter}`;
+                    filterIndicator.classList.add('show');
+                    setTimeout(() => filterIndicator.classList.remove('show'), 1500);
+                });
+            });
+
+            // Intensity slider
+            intensitySlider.addEventListener('input', function() {
+                intensity = this.value / 100;
+                intensityValue.textContent = Math.round(intensity * 100) + '%';
+            });
+
+            // Action buttons
+            captureBtn.addEventListener('click', captureImage);
+            recordBtn.addEventListener('click', toggleRecording);
+            countdownBtn.addEventListener('click', startCountdown);
+            resetBtn.addEventListener('click', resetFilters);
+
+            // Share modal
+            closeShareModal.addEventListener('click', () => {
+                shareModal.classList.remove('show');
+            });
+            shareModal.addEventListener('click', (e) => {
+                if (e.target === shareModal) shareModal.classList.remove('show');
+            });
+            downloadBtn.addEventListener('click', downloadImage);
+            copyBtn.addEventListener('click', copyImage);
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT') return;
+                if (e.key === 'c' || e.key === 'C') captureImage();
+                if (e.key === 'r' || e.key === 'R') toggleRecording();
+                if (e.key === 't' || e.key === 'T') startCountdown();
+                if (e.key === 'Space') {
+                    e.preventDefault();
+                    // Cycle filters
+                    const filters = ['none', 'cat', 'dog', 'bunny', 'glasses', 'hat', 'makeup', 'rainbow', 'glitch'];
+                    const currentIndex = filters.indexOf(currentFilter);
+                    const nextIndex = (currentIndex + 1) % filters.length;
+                    document.querySelector(`[data-filter="${filters[nextIndex]}"]`)?.click();
+                }
+                if (e.key === 'Escape') shareModal.classList.remove('show');
+            });
+
+            // ---------- Init ----------
+            startCamera();
+
+            console.log('🎪 AR Face Filters Studio loaded!');
+            console.log('💡 Tips:');
+            console.log('  - Click filters to apply effects');
+            console.log('  - Adjust intensity with the slider');
+            console.log('  - Spacebar cycles through filters');
+            console.log('  - C = Capture, R = Record, T = Timer');
+            console.log('  - Face tracking is simulated (ready for MediaPipe)');
+
+        })();
+    </script>
+</body>
+</html>

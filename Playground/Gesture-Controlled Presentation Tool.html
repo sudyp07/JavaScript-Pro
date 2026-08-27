@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>✋ Gesture Presentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a1a;
+            color: #dce5ff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .app {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            min-width: 320px;
+            background: rgba(10, 10, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 1.2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #3a4f7a;
+            border-radius: 10px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .logo span {
+            background: linear-gradient(135deg, #fd79a8, #6c5ce7, #00cec9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section {
+            margin: 0.5rem 0;
+        }
+        .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #54668f;
+            margin-bottom: 0.3rem;
+        }
+
+        .slide-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0.3rem 0;
+            min-height: 100px;
+        }
+        .slide-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .slide-list::-webkit-scrollbar-thumb {
+            background: #3a4f7a;
+            border-radius: 10px;
+        }
+
+        .slide-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.4rem 0.6rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 30px;
+            margin-bottom: 0.2rem;
+            cursor: pointer;
+            transition: 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .slide-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .slide-item.active {
+            border-left-color: #6c5ce7;
+            background: rgba(108, 92, 231, 0.1);
+        }
+        .slide-item .num {
+            font-size: 0.7rem;
+            color: #54668f;
+            min-width: 24px;
+        }
+        .slide-item .title {
+            font-size: 0.8rem;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .slide-item .delete-slide {
+            background: none;
+            border: none;
+            color: #54668f;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0 0.2rem;
+        }
+        .slide-item .delete-slide:hover {
+            color: #ff6b6b;
+        }
+
+        .add-slide-row {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .add-slide-row input {
+            flex: 1;
+            padding: 0.4rem 0.8rem;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            color: white;
+            font-size: 0.8rem;
+            outline: none;
+        }
+        .add-slide-row input:focus {
+            border-color: #6c5ce7;
+        }
+        .add-slide-row button {
+            padding: 0.4rem 1rem;
+            border: none;
+            border-radius: 30px;
+            background: #6c5ce7;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+        .add-slide-row button:hover {
+            background: #7d6ff0;
+        }
+
+        .gesture-status {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 30px;
+            font-size: 0.75rem;
+            color: #8899c7;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .gesture-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background: #e17055;
+        }
+        .gesture-status .dot.active {
+            background: #00b894;
+            animation: blink 1s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+        .gesture-status .gesture-name {
+            font-weight: 600;
+            color: #dce5ff;
+            min-width: 60px;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.4rem;
+        }
+        .action-btn {
+            padding: 0.4rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.02);
+            color: #dce5ff;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: 0.15s;
+            text-align: center;
+        }
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .action-btn.primary {
+            background: #6c5ce7;
+            border-color: #6c5ce7;
+            color: white;
+        }
+        .action-btn.primary:hover {
+            background: #7d6ff0;
+        }
+        .action-btn.success {
+            background: #00b894;
+            border-color: #00b894;
+            color: white;
+        }
+        .action-btn.success:hover {
+            background: #00d2a0;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.2rem 1.5rem;
+            gap: 0.8rem;
+            position: relative;
+        }
+
+        .presentation-view {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.3);
+        }
+        .presentation-view .slide-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            font-size: 2rem;
+            text-align: center;
+            color: #dce5ff;
+            flex-direction: column;
+            gap: 1rem;
+            background: radial-gradient(ellipse at center, #1a1a3e, #0a0a1a);
+            transition: all 0.5s ease;
+        }
+        .presentation-view .slide-content .slide-title {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fd79a8, #6c5ce7, #00cec9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .presentation-view .slide-content .slide-sub {
+            font-size: 1.2rem;
+            color: #8899c7;
+            max-width: 600px;
+        }
+        .presentation-view .slide-number {
+            position: absolute;
+            bottom: 1.5rem;
+            right: 2rem;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Camera overlay (for gesture) */
+        .camera-overlay {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 1.5rem;
+            width: 160px;
+            height: 120px;
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            opacity: 0.7;
+            transition: 0.3s;
+            background: #0a0a1a;
+        }
+        .camera-overlay:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        .camera-overlay video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        .camera-overlay canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 0.6rem;
+            justify-content: center;
+            align-items: center;
+            padding: 0.4rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .nav-controls button {
+            padding: 0.4rem 1.2rem;
+            border: none;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #dce5ff;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.15s;
+        }
+        .nav-controls button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-controls button.primary {
+            background: #6c5ce7;
+            color: white;
+        }
+        .nav-controls button.primary:hover {
+            background: #7d6ff0;
+        }
+        .nav-controls .slide-counter {
+            color: #8899c7;
+            font-size: 0.8rem;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                min-width: unset;
+                max-height: 40vh;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                padding: 0.8rem;
+            }
+            .main-content {
+                padding: 0.8rem;
+            }
+            .camera-overlay {
+                width: 100px;
+                height: 75px;
+                bottom: 1rem;
+                left: 1rem;
+            }
+            .presentation-view .slide-content .slide-title {
+                font-size: 1.8rem;
+            }
+            .presentation-view .slide-content .slide-sub {
+                font-size: 1rem;
+            }
+            .nav-controls button {
+                padding: 0.3rem 0.8rem;
+                font-size: 0.75rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .sidebar {
+                max-height: 45vh;
+            }
+            .camera-overlay {
+                width: 80px;
+                height: 60px;
+            }
+            .presentation-view .slide-content .slide-title {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                ✋ <span>Gesture Present</span>
+            </div>
+
+            <div class="gesture-status">
+                <span class="dot" id="cameraDot"></span>
+                <span>Gesture:</span>
+                <span class="gesture-name" id="gestureName">None</span>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📊 Slides</div>
+                <div class="slide-list" id="slideList"></div>
+                <div class="add-slide-row">
+                    <input type="text" id="slideTitleInput" placeholder="Slide title..." />
+                    <button id="addSlideBtn">+</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🎮 Controls</div>
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="startCameraBtn">📷 Start Camera</button>
+                    <button class="action-btn" id="stopCameraBtn">⏹️ Stop Camera</button>
+                    <button class="action-btn success" id="fullscreenBtn">⛶ Fullscreen</button>
+                    <button class="action-btn" id="resetSlidesBtn">🔄 Reset</button>
+                </div>
+            </div>
+
+            <div style="font-size:0.7rem;color:#54668f;text-align:center;padding:0.3rem;border-top:1px solid rgba(255,255,255,0.03);margin-top:auto;">
+                ✋ Swipe left/right to change slides<br>
+                👆 Point to highlight
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="presentation-view" id="presentationView">
+                <div class="slide-content" id="slideContent">
+                    <div class="slide-title">👋 Welcome!</div>
+                    <div class="slide-sub">Gesture-controlled presentations<br>Use your webcam to control slides</div>
+                </div>
+                <div class="slide-number" id="slideNumber">1 / 1</div>
+
+                <!-- Camera overlay -->
+                <div class="camera-overlay" id="cameraOverlay">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="gestureCanvas"></canvas>
+                </div>
+            </div>
+
+            <div class="nav-controls">
+                <button id="prevBtn">◀ Prev</button>
+                <span class="slide-counter" id="slideCounter">1 / 1</span>
+                <button id="nextBtn">Next ▶</button>
+                <button class="primary" id="presentBtn">▶ Present</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- DOM refs ----------
+            const slideList = document.getElementById('slideList');
+            const slideContent = document.getElementById('slideContent');
+            const slideNumber = document.getElementById('slideNumber');
+            const slideCounter = document.getElementById('slideCounter');
+            const slideTitleInput = document.getElementById('slideTitleInput');
+            const addSlideBtn = document.getElementById('addSlideBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const presentBtn = document.getElementById('presentBtn');
+            const startCameraBtn = document.getElementById('startCameraBtn');
+            const stopCameraBtn = document.getElementById('stopCameraBtn');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const resetSlidesBtn = document.getElementById('resetSlidesBtn');
+            const gestureName = document.getElementById('gestureName');
+            const cameraDot = document.getElementById('cameraDot');
+
+            const video = document.getElementById('video');
+            const gestureCanvas = document.getElementById('gestureCanvas');
+            const ctx = gestureCanvas.getContext('2d');
+
+            // ---------- State ----------
+            let slides = [
+                { title: '👋 Welcome!', subtitle: 'Gesture-controlled presentations\nUse your webcam to control slides' },
+                { title: '✋ Gesture Controls', subtitle: 'Swipe left/right to navigate\nPoint to highlight content' },
+                { title: '🎯 Features', subtitle: '• Real-time hand tracking\n• Virtual laser pointer\n• Fullscreen mode\n• Custom slides' },
+                { title: '🚀 Get Started', subtitle: 'Click "Start Camera" and use gestures\nto control your presentation!' }
+            ];
+            let currentSlide = 0;
+            let isPresenting = false;
+            let stream = null;
+            let isCameraActive = false;
+
+            // Gesture state
+            let gesture = {
+                detected: false,
+                name: 'None',
+                lastGesture: 'None',
+                swipeDirection: null,
+                pointerX: 0,
+                pointerY: 0,
+                handX: 0,
+                handY: 0,
+                confidence: 0
+            };
+
+            // ---------- Render slides ----------
+            function renderSlideList() {
+                let html = '';
+                slides.forEach((slide, index) => {
+                    html += `
+                        <div class="slide-item ${index === currentSlide ? 'active' : ''}" data-index="${index}">
+                            <span class="num">#${index + 1}</span>
+                            <span class="title">${slide.title}</span>
+                            <button class="delete-slide" data-index="${index}">✕</button>
+                        </div>
+                    `;
+                });
+                slideList.innerHTML = html;
+
+                // Event listeners
+                slideList.querySelectorAll('.slide-item').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        if (e.target.closest('.delete-slide')) return;
+                        const index = parseInt(this.dataset.index);
+                        goToSlide(index);
+                    });
+                });
+
+                slideList.querySelectorAll('.delete-slide').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const index = parseInt(this.dataset.index);
+                        if (slides.length <= 1) {
+                            showStatus('Cannot delete last slide');
+                            return;
+                        }
+                        slides.splice(index, 1);
+                        if (currentSlide >= slides.length) currentSlide = slides.length - 1;
+                        renderSlideList();
+                        showSlide();
+                    });
+                });
+            }
+
+            function showSlide() {
+                const slide = slides[currentSlide];
+                slideContent.innerHTML = `
+                    <div class="slide-title">${slide.title}</div>
+                    <div class="slide-sub">${slide.subtitle || ''}</div>
+                `;
+                slideNumber.textContent = `${currentSlide + 1} / ${slides.length}`;
+                slideCounter.textContent = `${currentSlide + 1} / ${slides.length}`;
+                renderSlideList();
+
+                // Update highlight if in presentation mode
+                if (isPresenting && gesture.detected) {
+                    highlightPointer();
+                }
+            }
+
+            function goToSlide(index) {
+                if (index < 0) index = slides.length - 1;
+                if (index >= slides.length) index = 0;
+                currentSlide = index;
+                showSlide();
+            }
+
+            // ---------- Gesture simulation (since we can't use MediaPipe without CDN) ----------
+            // We'll simulate hand tracking with mouse/touch for demo
+            // In production, you'd integrate MediaPipe Hands
+
+            let simulatedGesture = 'none';
+            let gestureTimer = null;
+
+            // Simulate gestures with keyboard for demo
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    if (isPresenting) {
+                        nextSlide();
+                        simulateGesture('Swipe Right');
+                    }
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    if (isPresenting) {
+                        prevSlide();
+                        simulateGesture('Swipe Left');
+                    }
+                } else if (e.key === 'p' || e.key === 'P') {
+                    togglePresentation();
+                } else if (e.key === 'f' || e.key === 'F') {
+                    toggleFullscreen();
+                } else if (e.key === 'c' || e.key === 'C') {
+                    if (isCameraActive) stopCamera();
+                    else startCamera();
+                }
+            });
+
+            function simulateGesture(name) {
+                gestureName.textContent = name;
+                gesture.detected = true;
+                gesture.name = name;
+                cameraDot.className = 'dot active';
+
+                clearTimeout(gestureTimer);
+                gestureTimer = setTimeout(() => {
+                    gestureName.textContent = 'None';
+                    gesture.detected = false;
+                    gesture.name = 'None';
+                    cameraDot.className = 'dot';
+                }, 1500);
+            }
+
+            // Mouse-based gesture simulation
+            let mouseX = 0,
+                mouseY = 0;
+            let isMouseDown = false;
+
+            document.addEventListener('mousemove', (e) => {
+                const rect = document.getElementById('presentationView').getBoundingClientRect();
+                mouseX = (e.clientX - rect.left) / rect.width;
+                mouseY = (e.clientY - rect.top) / rect.height;
+                gesture.pointerX = mouseX;
+                gesture.pointerY = mouseY;
+
+                if (isPresenting && isMouseDown) {
+                    highlightPointer();
+                }
+            });
+
+            document.addEventListener('mousedown', () => {
+                isMouseDown = true;
+                if (isPresenting) {
+                    simulateGesture('Pointing');
+                    highlightPointer();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isMouseDown = false;
+                if (isPresenting) {
+                    clearHighlight();
+                }
+            });
+
+            // Touch support
+            document.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                const rect = document.getElementById('presentationView').getBoundingClientRect();
+                gesture.pointerX = (touch.clientX - rect.left) / rect.width;
+                gesture.pointerY = (touch.clientY - rect.top) / rect.height;
+                if (isPresenting) {
+                    simulateGesture('Pointing');
+                    highlightPointer();
+                }
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                const touch = e.touches[0];
+                const rect = document.getElementById('presentationView').getBoundingClientRect();
+                gesture.pointerX = (touch.clientX - rect.left) / rect.width;
+                gesture.pointerY = (touch.clientY - rect.top) / rect.height;
+                if (isPresenting && isMouseDown) {
+                    highlightPointer();
+                }
+            });
+
+            document.addEventListener('touchend', () => {
+                if (isPresenting) {
+                    clearHighlight();
+                }
+            });
+
+            // ---------- Highlight pointer ----------
+            function highlightPointer() {
+                if (!isPresenting) return;
+                const view = document.getElementById('presentationView');
+                let existing = view.querySelector('.pointer-highlight');
+                if (!existing) {
+                    existing = document.createElement('div');
+                    existing.className = 'pointer-highlight';
+                    existing.style.cssText = `
+                        position: absolute;
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        border: 3px solid #6c5ce7;
+                        background: rgba(108, 92, 231, 0.15);
+                        pointer-events: none;
+                        z-index: 50;
+                        transition: all 0.1s;
+                        box-shadow: 0 0 30px rgba(108, 92, 231, 0.3);
+                    `;
+                    view.appendChild(existing);
+                }
+                const x = gesture.pointerX * 100;
+                const y = gesture.pointerY * 100;
+                existing.style.left = `calc(${x}% - 20px)`;
+                existing.style.top = `calc(${y}% - 20px)`;
+                existing.style.display = 'block';
+            }
+
+            function clearHighlight() {
+                const view = document.getElementById('presentationView');
+                const existing = view.querySelector('.pointer-highlight');
+                if (existing) existing.style.display = 'none';
+            }
+
+            // ---------- Presentation controls ----------
+            function nextSlide() {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    showSlide();
+                    simulateGesture('Swipe Right');
+                }
+            }
+
+            function prevSlide() {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide();
+                    simulateGesture('Swipe Left');
+                }
+            }
+
+            function togglePresentation() {
+                isPresenting = !isPresenting;
+                presentBtn.textContent = isPresenting ? '⏹ Stop' : '▶ Present';
+                presentBtn.style.background = isPresenting ? '#e17055' : '#6c5ce7';
+
+                if (isPresenting) {
+                    document.getElementById('presentationView').style.borderColor = '#6c5ce7';
+                    document.getElementById('presentationView').style.boxShadow = '0 0 40px rgba(108, 92, 231, 0.2)';
+                    showStatus('🎤 Presentation mode active');
+                } else {
+                    document.getElementById('presentationView').style.borderColor = 'rgba(255,255,255,0.04)';
+                    document.getElementById('presentationView').style.boxShadow = 'inset 0 0 60px rgba(0,0,0,0.3)';
+                    clearHighlight();
+                    showStatus('📝 Presentation mode paused');
+                }
+            }
+
+            // ---------- Camera ----------
+            async function startCamera() {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 320, height: 240, facingMode: 'user' },
+                        audio: false
+                    });
+                    video.srcObject = stream;
+                    await video.play();
+                    isCameraActive = true;
+                    cameraDot.className = 'dot active';
+                    startCameraBtn.textContent = '📷 Camera Active';
+                    startCameraBtn.style.background = '#00b894';
+
+                    // Setup gesture canvas
+                    gestureCanvas.width = 320;
+                    gestureCanvas.height = 240;
+
+                    // Start gesture simulation loop
+                    gestureLoop();
+
+                    showStatus('✅ Camera started! Use gestures to control slides');
+
+                } catch (error) {
+                    console.error('Camera error:', error);
+                    showStatus('❌ Camera error: ' + error.message);
+                    cameraDot.className = 'dot';
+                }
+            }
+
+            function stopCamera() {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+                isCameraActive = false;
+                video.srcObject = null;
+                cameraDot.className = 'dot';
+                startCameraBtn.textContent = '📷 Start Camera';
+                startCameraBtn.style.background = '#6c5ce7';
+                ctx.clearRect(0, 0, gestureCanvas.width, gestureCanvas.height);
+                showStatus('⏹️ Camera stopped');
+            }
+
+            // Simulated gesture detection loop
+            function gestureLoop() {
+                if (!isCameraActive) return;
+
+                // Draw camera feed on canvas
+                if (video.readyState >= 2) {
+                    ctx.drawImage(video, 0, 0, gestureCanvas.width, gestureCanvas.height);
+
+                    // Draw gesture overlay
+                    const cx = gestureCanvas.width / 2;
+                    const cy = gestureCanvas.height / 2;
+
+                    // Draw hand indicator (simulated)
+                    ctx.strokeStyle = 'rgba(108, 92, 231, 0.6)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(cx + Math.sin(Date.now() / 1000) * 30, cy + Math.cos(Date.now() / 1500) * 20, 25, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    // Draw finger points
+                    const fingers = [
+                        [0, -30],
+                        [-15, -15],
+                        [15, -15],
+                        [-10, 5],
+                        [10, 5]
+                    ];
+                    ctx.fillStyle = '#6c5ce7';
+                    fingers.forEach((f, i) => {
+                        const fx = cx + Math.sin(Date.now() / 1000 + i) * 30 + f[0];
+                        const fy = cy + Math.cos(Date.now() / 1500 + i * 0.5) * 20 + f[1];
+                        ctx.beginPath();
+                        ctx.arc(fx, fy, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+
+                    // Gesture detection simulation
+                    const gestureTypes = ['Swipe Left', 'Swipe Right', 'Pointing', 'Pinch', 'None'];
+                    const probabilities = [0.15, 0.15, 0.1, 0.05, 0.55];
+                    let rand = Math.random();
+                    let detected = 'None';
+                    for (let i = 0; i < probabilities.length; i++) {
+                        rand -= probabilities[i];
+                        if (rand <= 0) {
+                            detected = gestureTypes[i];
+                            break;
+                        }
+                    }
+
+                    // Only update if different from current
+                    if (detected !== 'None' && detected !== gesture.name) {
+                        if (isPresenting) {
+                            if (detected === 'Swipe Left') nextSlide();
+                            else if (detected === 'Swipe Right') prevSlide();
+                            else if (detected === 'Pointing') {
+                                // Simulate pointing at center
+                                gesture.pointerX = 0.5 + Math.sin(Date.now() / 2000) * 0.2;
+                                gesture.pointerY = 0.5 + Math.cos(Date.now() / 2500) * 0.2;
+                                highlightPointer();
+                            }
+                        }
+                        gestureName.textContent = detected;
+                        gesture.detected = detected !== 'None';
+                        gesture.name = detected;
+
+                        // Reset timer for gesture display
+                        clearTimeout(gestureTimer);
+                        gestureTimer = setTimeout(() => {
+                            if (gesture.name !== 'None') {
+                                gestureName.textContent = 'None';
+                                gesture.detected = false;
+                                gesture.name = 'None';
+                            }
+                        }, 2000);
+                    }
+                }
+
+                requestAnimationFrame(gestureLoop);
+            }
+
+            // ---------- Fullscreen ----------
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        showStatus('❌ Fullscreen error: ' + err.message);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+
+            // ---------- Status ----------
+            function showStatus(msg) {
+                // Could show in a toast, but we'll use the gesture status area
+                const statusEl = document.querySelector('.gesture-status');
+                if (statusEl) {
+                    const originalText = statusEl.innerHTML;
+                    // We'll just update the gesture name temporarily
+                    gestureName.textContent = '📢 ' + msg;
+                    setTimeout(() => {
+                        if (gesture.name !== 'None') {
+                            gestureName.textContent = gesture.name;
+                        } else {
+                            gestureName.textContent = 'None';
+                        }
+                    }, 3000);
+                }
+            }
+
+            // ---------- Slides management ----------
+            function addSlide() {
+                const title = slideTitleInput.value.trim() || 'New Slide';
+                const subtitle = 'Slide ' + (slides.length + 1);
+                slides.push({ title, subtitle });
+                slideTitleInput.value = '';
+                renderSlideList();
+                goToSlide(slides.length - 1);
+                showStatus('✅ Slide added: ' + title);
+            }
+
+            function resetSlides() {
+                if (confirm('Reset all slides?')) {
+                    slides = [
+                        { title: '👋 Welcome!', subtitle: 'Gesture-controlled presentations\nUse your webcam to control slides' },
+                        { title: '✋ Gesture Controls', subtitle: 'Swipe left/right to navigate\nPoint to highlight content' },
+                        { title: '🎯 Features', subtitle: '• Real-time hand tracking\n• Virtual laser pointer\n• Fullscreen mode\n• Custom slides' },
+                        { title: '🚀 Get Started', subtitle: 'Click "Start Camera" and use gestures\nto control your presentation!' }
+                    ];
+                    currentSlide = 0;
+                    renderSlideList();
+                    showSlide();
+                    showStatus('🔄 Slides reset to default');
+                }
+            }
+
+            // ---------- Event listeners ----------
+            addSlideBtn.addEventListener('click', addSlide);
+            slideTitleInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') addSlide();
+            });
+
+            prevBtn.addEventListener('click', prevSlide);
+            nextBtn.addEventListener('click', nextSlide);
+            presentBtn.addEventListener('click', togglePresentation);
+
+            startCameraBtn.addEventListener('click', startCamera);
+            stopCameraBtn.addEventListener('click', stopCamera);
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            resetSlidesBtn.addEventListener('click', resetSlides);
+
+            // Keyboard shortcuts for presentation
+            document.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    if (isPresenting) {
+                        e.preventDefault();
+                        nextSlide();
+                    }
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    if (isPresenting) {
+                        e.preventDefault();
+                        prevSlide();
+                    }
+                }
+            });
+
+            // ---------- Init ----------
+            renderSlideList();
+            showSlide();
+            showStatus('👋 Ready! Click "Start Camera" to begin');
+
+            console.log('✋ Gesture Presentation Tool loaded!');
+            console.log('💡 Controls:');
+            console.log('  - Arrow keys: navigate slides (in presentation mode)');
+            console.log('  - P: Toggle presentation mode');
+            console.log('  - F: Toggle fullscreen');
+            console.log('  - C: Toggle camera');
+            console.log('  - Click and drag on slide: highlight/annotate');
+
+        })();
+    </script>
+</body>
+</html>

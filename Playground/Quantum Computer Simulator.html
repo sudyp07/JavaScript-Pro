@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🔬 Quantum Computer Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0a1a;
+            color: #dce5ff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .app {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 30%, #0a1a2e 60%, #0a0a1a 100%);
+            position: relative;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 340px;
+            min-width: 340px;
+            background: rgba(10, 10, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 1.2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #3a4f7a;
+            border-radius: 10px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .logo span {
+            background: linear-gradient(135deg, #00cec9, #6c5ce7, #fd79a8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section {
+            margin: 0.6rem 0;
+        }
+        .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #54668f;
+            margin-bottom: 0.3rem;
+        }
+
+        .qubit-controls {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .qubit-btn {
+            padding: 0.4rem 0.8rem;
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.02);
+            color: #8899c7;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: 0.15s;
+            text-align: center;
+            flex: 1;
+            min-width: 50px;
+        }
+        .qubit-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+        .qubit-btn.active {
+            border-color: #6c5ce7;
+            background: rgba(108, 92, 231, 0.15);
+            color: white;
+        }
+        .qubit-btn .state {
+            display: block;
+            font-size: 1.2rem;
+        }
+
+        .gate-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 0.3rem;
+        }
+        .gate-btn {
+            padding: 0.3rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 0.8rem;
+            background: rgba(255, 255, 255, 0.02);
+            color: #8899c7;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: 0.15s;
+            text-align: center;
+        }
+        .gate-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.05);
+        }
+        .gate-btn .symbol {
+            font-size: 1.2rem;
+            display: block;
+        }
+        .gate-btn .label {
+            font-size: 0.6rem;
+        }
+
+        .circuit-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0.3rem 0;
+            min-height: 80px;
+        }
+        .circuit-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .circuit-list::-webkit-scrollbar-thumb {
+            background: #3a4f7a;
+            border-radius: 10px;
+        }
+
+        .circuit-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.3rem 0.6rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+            margin-bottom: 0.2rem;
+            font-size: 0.75rem;
+            border-left: 3px solid #6c5ce7;
+        }
+        .circuit-item .gate-name {
+            font-weight: 600;
+            color: #dce5ff;
+        }
+        .circuit-item .qubit-label {
+            color: #54668f;
+            font-size: 0.65rem;
+        }
+        .circuit-item .remove-gate {
+            background: none;
+            border: none;
+            color: #54668f;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0 0.2rem;
+        }
+        .circuit-item .remove-gate:hover {
+            color: #e17055;
+        }
+
+        .status-text {
+            font-size: 0.75rem;
+            color: #54668f;
+            text-align: center;
+            padding: 0.3rem;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.02);
+            margin-top: auto;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.2rem 1.5rem;
+            gap: 0.8rem;
+            position: relative;
+        }
+
+        .quantum-view {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        /* Qubit Visualization */
+        .qubit-visualization {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            padding: 1rem;
+        }
+        .qubit-visualization canvas {
+            width: 300px;
+            height: 300px;
+            display: block;
+        }
+
+        .qubit-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: 200px;
+        }
+        .qubit-info .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0.8rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.85rem;
+        }
+        .qubit-info .info-row .label {
+            color: #8899c7;
+        }
+        .qubit-info .info-row .value {
+            font-weight: 600;
+            font-family: monospace;
+        }
+        .qubit-info .info-row .value.highlight {
+            color: #6c5ce7;
+        }
+
+        .state-badge {
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 0.1rem;
+        }
+        .state-badge.zero {
+            background: rgba(108, 92, 231, 0.2);
+            color: #6c5ce7;
+        }
+        .state-badge.one {
+            background: rgba(253, 121, 168, 0.2);
+            color: #fd79a8;
+        }
+        .state-badge.superposition {
+            background: rgba(0, 206, 201, 0.2);
+            color: #00cec9;
+        }
+        .state-badge.entangled {
+            background: rgba(253, 203, 110, 0.2);
+            color: #fdcb6e;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.4rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #dce5ff;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: 0.15s;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            text-align: center;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: #6c5ce7;
+            border-color: #6c5ce7;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #7d6ff0;
+        }
+        .btn-success {
+            background: #00b894;
+            border-color: #00b894;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #00d2a0;
+        }
+        .btn-danger {
+            background: #e17055;
+            border-color: #e17055;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #e74c6f;
+        }
+        .btn-warning {
+            background: #fdcb6e;
+            border-color: #fdcb6e;
+            color: #1a1a2e;
+        }
+        .btn-warning:hover {
+            background: #ffeaa7;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                min-width: unset;
+                max-height: 45vh;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                padding: 0.8rem;
+            }
+            .main-content {
+                padding: 0.8rem;
+            }
+            .qubit-visualization {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 0.8rem;
+            }
+            .qubit-visualization canvas {
+                width: 200px;
+                height: 200px;
+            }
+            .gate-grid {
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
+            .action-buttons {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 480px) {
+            .sidebar {
+                max-height: 50vh;
+            }
+            .qubit-visualization canvas {
+                width: 150px;
+                height: 150px;
+            }
+            .gate-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+            .qubit-controls {
+                gap: 0.2rem;
+            }
+            .qubit-btn {
+                padding: 0.2rem 0.4rem;
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                🔬 <span>Quantum Simulator</span>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🎯 Qubit Controls</div>
+                <div class="qubit-controls">
+                    <button class="qubit-btn active" data-qubit="0">
+                        <span class="state">|0⟩</span>
+                        Qubit 1
+                    </button>
+                    <button class="qubit-btn" data-qubit="1">
+                        <span class="state">|0⟩</span>
+                        Qubit 2
+                    </button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🔧 Quantum Gates</div>
+                <div class="gate-grid">
+                    <button class="gate-btn" data-gate="h">
+                        <span class="symbol">H</span>
+                        <span class="label">Hadamard</span>
+                    </button>
+                    <button class="gate-btn" data-gate="x">
+                        <span class="symbol">X</span>
+                        <span class="label">Pauli-X</span>
+                    </button>
+                    <button class="gate-btn" data-gate="y">
+                        <span class="symbol">Y</span>
+                        <span class="label">Pauli-Y</span>
+                    </button>
+                    <button class="gate-btn" data-gate="z">
+                        <span class="symbol">Z</span>
+                        <span class="label">Pauli-Z</span>
+                    </button>
+                    <button class="gate-btn" data-gate="s">
+                        <span class="symbol">S</span>
+                        <span class="label">Phase</span>
+                    </button>
+                    <button class="gate-btn" data-gate="t">
+                        <span class="symbol">T</span>
+                        <span class="label">π/8</span>
+                    </button>
+                    <button class="gate-btn" data-gate="cx">
+                        <span class="symbol">CX</span>
+                        <span class="label">CNOT</span>
+                    </button>
+                    <button class="gate-btn" data-gate="swap">
+                        <span class="symbol">SWAP</span>
+                        <span class="label">Swap</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📋 Circuit</div>
+                <div class="circuit-list" id="circuitList">
+                    <div style="color:#54668f;font-size:0.8rem;text-align:center;padding:0.5rem 0;">
+                        No gates applied yet.<br />Click gates to build your quantum circuit.
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="runBtn">⚡ Run Circuit</button>
+                    <button class="btn btn-danger" id="clearBtn">🗑️ Clear</button>
+                    <button class="btn btn-warning" id="resetBtn">🔄 Reset</button>
+                </div>
+            </div>
+
+            <div class="status-text" id="statusText">🔬 Ready to simulate</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="quantum-view">
+                <div class="qubit-visualization" id="qubitVisualization">
+                    <canvas id="blochCanvas"></canvas>
+                    <div class="qubit-info">
+                        <div class="info-row">
+                            <span class="label">Qubit State</span>
+                            <span class="value highlight" id="stateDisplay">|0⟩</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Amplitude α (|0⟩)</span>
+                            <span class="value" id="alphaDisplay">1.0000</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Amplitude β (|1⟩)</span>
+                            <span class="value" id="betaDisplay">0.0000</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Measurement</span>
+                            <span class="value" id="measureDisplay">0</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Entanglement</span>
+                            <span class="value" id="entanglementDisplay">❌ No</span>
+                        </div>
+                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.2rem;">
+                            <span class="state-badge zero" id="badgeZero">|0⟩</span>
+                            <span class="state-badge one" id="badgeOne">|1⟩</span>
+                            <span class="state-badge superposition" id="badgeSuper" style="display:none;">🌀 Superposition</span>
+                            <span class="state-badge entangled" id="badgeEntangle" style="display:none;">🔗 Entangled</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- Quantum State ----------
+            class QuantumState {
+                constructor(numQubits = 1) {
+                    this.numQubits = numQubits;
+                    this.amplitudes = new Array(1 << numQubits).fill(0);
+                    this.amplitudes[0] = 1; // Start in |0⟩
+                    this.entangled = false;
+                }
+
+                getStateString() {
+                    const size = this.amplitudes.length;
+                    const states = [];
+                    for (let i = 0; i < size; i++) {
+                        if (Math.abs(this.amplitudes[i]) > 0.001) {
+                            const binary = i.toString(2).padStart(this.numQubits, '0');
+                            states.push(`${this.amplitudes[i].toFixed(4)}|${binary}⟩`);
+                        }
+                    }
+                    return states.join(' + ') || '0';
+                }
+
+                getMeasurement() {
+                    const probs = this.amplitudes.map(a => Math.abs(a) * Math.abs(a));
+                    let r = Math.random();
+                    let sum = 0;
+                    for (let i = 0; i < probs.length; i++) {
+                        sum += probs[i];
+                        if (r <= sum) return i;
+                    }
+                    return probs.length - 1;
+                }
+
+                applyGate(matrix, qubit) {
+                    const size = this.amplitudes.length;
+                    const newAmps = new Array(size).fill(0);
+                    const n = this.numQubits;
+
+                    for (let i = 0; i < size; i++) {
+                        if (Math.abs(this.amplitudes[i]) < 0.0001) continue;
+
+                        const bits = i.toString(2).padStart(n, '0');
+                        const bit = parseInt(bits[n - 1 - qubit]);
+
+                        for (let j = 0; j < matrix.length; j++) {
+                            const newBit = j;
+                            const newBits = bits.slice(0, n - 1 - qubit) + newBit + bits.slice(n - qubit);
+                            const newIdx = parseInt(newBits, 2);
+                            newAmps[newIdx] += matrix[bit][newBit] * this.amplitudes[i];
+                        }
+                    }
+
+                    this.amplitudes = newAmps;
+                    this.normalize();
+                }
+
+                applyCNOT(control, target) {
+                    const size = this.amplitudes.length;
+                    const newAmps = new Array(size).fill(0);
+                    const n = this.numQubits;
+
+                    for (let i = 0; i < size; i++) {
+                        const bits = i.toString(2).padStart(n, '0');
+                        const controlBit = parseInt(bits[n - 1 - control]);
+                        const targetBit = parseInt(bits[n - 1 - target]);
+
+                        let newTargetBit = targetBit;
+                        if (controlBit === 1) {
+                            newTargetBit = 1 - targetBit;
+                        }
+
+                        const newBits = bits.slice(0, n - 1 - target) + newTargetBit + bits.slice(n - target);
+                        const newIdx = parseInt(newBits, 2);
+                        newAmps[newIdx] += this.amplitudes[i];
+                    }
+
+                    this.amplitudes = newAmps;
+                    this.normalize();
+
+                    // Check entanglement
+                    this.checkEntanglement();
+                }
+
+                applySWAP(qubit1, qubit2) {
+                    const size = this.amplitudes.length;
+                    const newAmps = new Array(size).fill(0);
+                    const n = this.numQubits;
+
+                    for (let i = 0; i < size; i++) {
+                        const bits = i.toString(2).padStart(n, '0');
+                        const b1 = bits[n - 1 - qubit1];
+                        const b2 = bits[n - 1 - qubit2];
+                        const newBits = bits.slice(0, n - 1 - qubit1) + b2 + bits.slice(n - qubit1);
+                        // Need to swap both bits properly
+                        let newBits2 = newBits.split('');
+                        newBits2[n - 1 - qubit2] = b1;
+                        const finalBits = newBits2.join('');
+                        const newIdx = parseInt(finalBits, 2);
+                        newAmps[newIdx] += this.amplitudes[i];
+                    }
+
+                    this.amplitudes = newAmps;
+                    this.normalize();
+                }
+
+                normalize() {
+                    const norm = Math.sqrt(this.amplitudes.reduce((sum, a) => sum + a * a, 0));
+                    if (norm > 0) {
+                        this.amplitudes = this.amplitudes.map(a => a / norm);
+                    }
+                }
+
+                checkEntanglement() {
+                    // Simple entanglement check: if the state can be written as a tensor product
+                    // For 2 qubits: check if |a00|^2 * |a11|^2 == |a01|^2 * |a10|^2
+                    if (this.numQubits === 2) {
+                        const a00 = this.amplitudes[0];
+                        const a01 = this.amplitudes[1];
+                        const a10 = this.amplitudes[2];
+                        const a11 = this.amplitudes[3];
+                        const lhs = Math.abs(a00) * Math.abs(a00) * Math.abs(a11) * Math.abs(a11);
+                        const rhs = Math.abs(a01) * Math.abs(a01) * Math.abs(a10) * Math.abs(a10);
+                        this.entangled = Math.abs(lhs - rhs) > 0.01;
+                    } else {
+                        this.entangled = false;
+                    }
+                }
+
+                getBlochVector() {
+                    // Simplified Bloch sphere representation
+                    const alpha = this.amplitudes[0] || 0;
+                    const beta = this.amplitudes[1] || 0;
+                    const x = 2 * (alpha * beta.conjugate + alpha.conjugate * beta);
+                    const y = 2 * (alpha.conjugate * beta - alpha * beta.conjugate);
+                    const z = alpha * alpha.conjugate - beta * beta.conjugate;
+                    return {
+                        x: x.real || 0,
+                        y: y.real || 0,
+                        z: z.real || 0,
+                        alpha: alpha,
+                        beta: beta
+                    };
+                }
+            }
+
+            // ---------- Quantum Circuit ----------
+            class QuantumCircuit {
+                constructor(numQubits = 1) {
+                    this.numQubits = numQubits;
+                    this.gates = [];
+                    this.state = new QuantumState(numQubits);
+                }
+
+                addGate(gate, qubit, target = null) {
+                    this.gates.push({ gate, qubit, target });
+                }
+
+                run() {
+                    this.state = new QuantumState(this.numQubits);
+                    for (const g of this.gates) {
+                        switch (g.gate) {
+                            case 'h':
+                                this.state.applyGate([
+                                    [1 / Math.sqrt(2), 1 / Math.sqrt(2)],
+                                    [1 / Math.sqrt(2), -1 / Math.sqrt(2)]
+                                ], g.qubit);
+                                break;
+                            case 'x':
+                                this.state.applyGate([
+                                    [0, 1],
+                                    [1, 0]
+                                ], g.qubit);
+                                break;
+                            case 'y':
+                                this.state.applyGate([
+                                    [0, -1],
+                                    [1, 0]
+                                ], g.qubit);
+                                break;
+                            case 'z':
+                                this.state.applyGate([
+                                    [1, 0],
+                                    [0, -1]
+                                ], g.qubit);
+                                break;
+                            case 's':
+                                this.state.applyGate([
+                                    [1, 0],
+                                    [0, 1]
+                                ], g.qubit);
+                                break;
+                            case 't':
+                                this.state.applyGate([
+                                    [1, 0],
+                                    [0, Math.exp(1)]
+                                ], g.qubit);
+                                break;
+                            case 'cx':
+                                this.state.applyCNOT(g.qubit, g.target);
+                                break;
+                            case 'swap':
+                                this.state.applySWAP(g.qubit, g.target);
+                                break;
+                        }
+                    }
+                    return this.state;
+                }
+
+                clear() {
+                    this.gates = [];
+                    this.state = new QuantumState(this.numQubits);
+                }
+            }
+
+            // ---------- DOM refs ----------
+            const canvas = document.getElementById('blochCanvas');
+            const ctx = canvas.getContext('2d');
+            const circuitList = document.getElementById('circuitList');
+            const statusText = document.getElementById('statusText');
+
+            const stateDisplay = document.getElementById('stateDisplay');
+            const alphaDisplay = document.getElementById('alphaDisplay');
+            const betaDisplay = document.getElementById('betaDisplay');
+            const measureDisplay = document.getElementById('measureDisplay');
+            const entanglementDisplay = document.getElementById('entanglementDisplay');
+            const badgeZero = document.getElementById('badgeZero');
+            const badgeOne = document.getElementById('badgeOne');
+            const badgeSuper = document.getElementById('badgeSuper');
+            const badgeEntangle = document.getElementById('badgeEntangle');
+
+            const runBtn = document.getElementById('runBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            // ---------- State ----------
+            let circuit = new QuantumCircuit(2);
+            let currentQubit = 0;
+            let currentState = null;
+
+            // ---------- Canvas setup ----------
+            function resizeCanvas() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                const size = Math.min(rect.width * 0.45, 300, rect.height * 0.8);
+                canvas.width = size;
+                canvas.height = size;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // ---------- Draw Bloch Sphere ----------
+            function drawBlochSphere(state) {
+                const width = canvas.width;
+                const height = canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) * 0.42;
+
+                ctx.clearRect(0, 0, width, height);
+
+                // Background glow
+                const glow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 1.2);
+                glow.addColorStop(0, 'rgba(108, 92, 231, 0.05)');
+                glow.addColorStop(1, 'rgba(108, 92, 231, 0)');
+                ctx.fillStyle = glow;
+                ctx.fillRect(0, 0, width, height);
+
+                // Draw sphere
+                ctx.save();
+                ctx.translate(centerX, centerY);
+
+                // Sphere gradient
+                const grad = ctx.createRadialGradient(-radius * 0.3, -radius * 0.3, 0, 0, 0, radius);
+                grad.addColorStop(0, 'rgba(108, 92, 231, 0.15)');
+                grad.addColorStop(0.7, 'rgba(108, 92, 231, 0.05)');
+                grad.addColorStop(1, 'rgba(108, 92, 231, 0.01)');
+
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(108, 92, 231, 0.2)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Grid lines
+                ctx.strokeStyle = 'rgba(108, 92, 231, 0.08)';
+                ctx.lineWidth = 1;
+
+                // Equator
+                ctx.beginPath();
+                ctx.ellipse(0, 0, radius, radius * 0.3, 0, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Vertical line
+                ctx.beginPath();
+                ctx.moveTo(0, -radius);
+                ctx.lineTo(0, radius);
+                ctx.stroke();
+
+                // Horizontal line
+                ctx.beginPath();
+                ctx.moveTo(-radius, 0);
+                ctx.lineTo(radius, 0);
+                ctx.stroke();
+
+                // |0⟩ and |1⟩ labels
+                ctx.fillStyle = 'rgba(108, 92, 231, 0.4)';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('|0⟩', 0, -radius - 14);
+                ctx.fillText('|1⟩', 0, radius + 14);
+                ctx.fillText('|+⟩', radius + 14, 0);
+                ctx.fillText('|-⟩', -radius - 14, 0);
+
+                // Draw state vector
+                if (state) {
+                    const bloch = state.getBlochVector();
+                    const x = bloch.x * radius;
+                    const y = bloch.y * radius;
+                    const z = bloch.z * radius;
+
+                    // Vector line
+                    const grad2 = ctx.createLinearGradient(0, 0, x, y);
+                    grad2.addColorStop(0, 'rgba(108, 92, 231, 0.3)');
+                    grad2.addColorStop(1, '#6c5ce7');
+
+                    // Draw vector
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(x, -y);
+                    ctx.strokeStyle = '#6c5ce7';
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = '#6c5ce7';
+                    ctx.shadowBlur = 15;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+
+                    // Draw vector head
+                    const angle = Math.atan2(-y, x);
+                    const headLen = 8;
+                    const headAngle = 0.6;
+                    ctx.fillStyle = '#6c5ce7';
+                    ctx.beginPath();
+                    ctx.moveTo(x, -y);
+                    ctx.lineTo(x - headLen * Math.cos(angle - headAngle), -y + headLen * Math.sin(angle - headAngle));
+                    ctx.lineTo(x - headLen * Math.cos(angle + headAngle), -y + headLen * Math.sin(angle + headAngle));
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Point glow
+                    const pointGlow = ctx.createRadialGradient(x, -y, 0, x, -y, 10);
+                    pointGlow.addColorStop(0, 'rgba(108, 92, 231, 0.3)');
+                    pointGlow.addColorStop(1, 'rgba(108, 92, 231, 0)');
+                    ctx.fillStyle = pointGlow;
+                    ctx.beginPath();
+                    ctx.arc(x, -y, 10, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Probability circle on z-axis
+                    const prob0 = Math.abs(bloch.alpha) * Math.abs(bloch.alpha);
+                    const prob1 = Math.abs(bloch.beta) * Math.abs(bloch.beta);
+
+                    // Draw probability indicator on z-axis
+                    const zPos = (prob1 - prob0) * radius;
+                    ctx.fillStyle = 'rgba(253, 121, 168, 0.2)';
+                    ctx.beginPath();
+                    ctx.arc(0, -zPos, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(253, 121, 168, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    // Update info
+                    updateInfo(state);
+                }
+
+                ctx.restore();
+            }
+
+            // ---------- Update Info ----------
+            function updateInfo(state) {
+                const bloch = state.getBlochVector();
+                const alpha = bloch.alpha;
+                const beta = bloch.beta;
+
+                stateDisplay.textContent = `|ψ⟩ = ${alpha.real.toFixed(3)}|0⟩ + ${beta.real.toFixed(3)}|1⟩`;
+                alphaDisplay.textContent = alpha.real.toFixed(4) + (alpha.imag ? ` + ${alpha.imag.toFixed(4)}i` : '');
+                betaDisplay.textContent = beta.real.toFixed(4) + (beta.imag ? ` + ${beta.imag.toFixed(4)}i` : '');
+
+                const prob0 = Math.abs(alpha) * Math.abs(alpha);
+                const prob1 = Math.abs(beta) * Math.abs(beta);
+                measureDisplay.textContent = prob1 > 0.5 ? '1' : '0';
+
+                entanglementDisplay.textContent = state.entangled ? '🔗 Yes' : '❌ No';
+
+                // Badges
+                if (state.entangled) {
+                    badgeEntangle.style.display = 'inline-block';
+                    badgeSuper.style.display = 'none';
+                } else if (prob0 > 0.1 && prob1 > 0.1) {
+                    badgeSuper.style.display = 'inline-block';
+                    badgeEntangle.style.display = 'none';
+                } else {
+                    badgeSuper.style.display = 'none';
+                    badgeEntangle.style.display = 'none';
+                }
+
+                if (prob0 > prob1) {
+                    badgeZero.style.opacity = '1';
+                    badgeOne.style.opacity = '0.3';
+                } else {
+                    badgeZero.style.opacity = '0.3';
+                    badgeOne.style.opacity = '1';
+                }
+            }
+
+            // ---------- Render Circuit ----------
+            function renderCircuit() {
+                if (circuit.gates.length === 0) {
+                    circuitList.innerHTML = `
+                        <div style="color:#54668f;font-size:0.8rem;text-align:center;padding:0.5rem 0;">
+                            No gates applied yet.<br />Click gates to build your quantum circuit.
+                        </div>
+                    `;
+                    return;
+                }
+
+                const gateNames = {
+                    'h': 'Hadamard',
+                    'x': 'Pauli-X',
+                    'y': 'Pauli-Y',
+                    'z': 'Pauli-Z',
+                    's': 'Phase',
+                    't': 'π/8',
+                    'cx': 'CNOT',
+                    'swap': 'SWAP'
+                };
+
+                let html = '';
+                circuit.gates.forEach((g, index) => {
+                    const name = gateNames[g.gate] || g.gate;
+                    const qubitInfo = g.target !== null ?
+                        `Q${g.qubit} → Q${g.target}` :
+                        `Q${g.qubit}`;
+                    html += `
+                        <div class="circuit-item">
+                            <span>
+                                <span class="gate-name">${name}</span>
+                                <span class="qubit-label">${qubitInfo}</span>
+                            </span>
+                            <button class="remove-gate" data-index="${index}">✕</button>
+                        </div>
+                    `;
+                });
+                circuitList.innerHTML = html;
+
+                circuitList.querySelectorAll('.remove-gate').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        circuit.gates.splice(index, 1);
+                        renderCircuit();
+                        runCircuit();
+                    });
+                });
+            }
+
+            // ---------- Run Circuit ----------
+            function runCircuit() {
+                currentState = circuit.run();
+                drawBlochSphere(currentState);
+                statusText.textContent = `⚡ Circuit run successfully! ${circuit.gates.length} gates applied.`;
+            }
+
+            // ---------- Event Listeners ----------
+            // Qubit selection
+            document.querySelectorAll('.qubit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.qubit-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentQubit = parseInt(this.dataset.qubit);
+                    statusText.textContent = `🎯 Selected Qubit ${currentQubit + 1}`;
+                });
+            });
+
+            // Gate buttons
+            document.querySelectorAll('.gate-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const gate = this.dataset.gate;
+                    const qubit = currentQubit;
+
+                    if (gate === 'cx' || gate === 'swap') {
+                        // Need a target qubit (use the other one)
+                        const target = qubit === 0 ? 1 : 0;
+                        circuit.addGate(gate, qubit, target);
+                        statusText.textContent =
+                            `🔧 Applied ${this.querySelector('.label').textContent} gate: Q${qubit} → Q${target}`;
+                    } else {
+                        circuit.addGate(gate, qubit);
+                        statusText.textContent = `🔧 Applied ${this.querySelector('.label').textContent} gate to Q${qubit}`;
+                    }
+
+                    renderCircuit();
+                    runCircuit();
+                });
+            });
+
+            // Run button
+            runBtn.addEventListener('click', runCircuit);
+
+            // Clear button
+            clearBtn.addEventListener('click', () => {
+                circuit.clear();
+                renderCircuit();
+                currentState = circuit.state;
+                drawBlochSphere(currentState);
+                statusText.textContent = '🗑️ Circuit cleared';
+            });
+
+            // Reset button
+            resetBtn.addEventListener('click', () => {
+                circuit = new QuantumCircuit(2);
+                renderCircuit();
+                currentState = circuit.state;
+                drawBlochSphere(currentState);
+                statusText.textContent = '🔄 Reset to initial state |0⟩';
+            });
+
+            // ---------- Init ----------
+            currentState = circuit.state;
+            drawBlochSphere(currentState);
+            renderCircuit();
+            statusText.textContent = '🔬 Quantum Simulator ready! Build your circuit.';
+
+            console.log('🔬 Quantum Computer Simulator loaded!');
+            console.log('💡 Tips:');
+            console.log('  - Click qubits to select them');
+            console.log('  - Apply quantum gates to build a circuit');
+            console.log('  - Watch the Bloch sphere update in real-time');
+            console.log('  - CNOT and SWAP gates use two qubits');
+            console.log('  - Try creating superposition with Hadamard!');
+
+        })();
+    </script>
+</body>
+</html>

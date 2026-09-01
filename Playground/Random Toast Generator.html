@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🍞 Random Toast Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0a1a;
+            color: #dce5ff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            background: radial-gradient(ellipse at center, #1a0a2e, #0a0a1a);
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(20, 20, 40, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 2.5rem;
+            padding: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background particles */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(108, 92, 231, 0.03), transparent 60%),
+                radial-gradient(circle at 70% 80%, rgba(253, 121, 168, 0.03), transparent 60%),
+                radial-gradient(circle at 50% 20%, rgba(0, 206, 201, 0.03), transparent 60%);
+            animation: rotate-bg 30s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes rotate-bg {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        .header .emoji {
+            font-size: 4rem;
+            display: block;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0.2rem 0;
+            background: linear-gradient(135deg, #fd79a8, #6c5ce7, #00cec9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p {
+            color: #8899c7;
+            font-size: 0.95rem;
+        }
+
+        /* Toast display */
+        .toast-display {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            transition: all 0.5s ease;
+        }
+        .toast-display .toast-emoji {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes pop-in {
+            0% {
+                transform: scale(0) rotate(-30deg);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+        .toast-display .toast-message {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #dce5ff;
+            animation: fade-up 0.5s ease;
+        }
+        @keyframes fade-up {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .toast-display .toast-sub {
+            font-size: 0.9rem;
+            color: #8899c7;
+            margin-top: 0.3rem;
+        }
+        .toast-display .toast-tags {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin-top: 0.8rem;
+            justify-content: center;
+        }
+        .toast-display .toast-tag {
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(108, 92, 231, 0.15);
+            color: #6c5ce7;
+            border: 1px solid rgba(108, 92, 231, 0.1);
+        }
+        .toast-display .toast-tag.success {
+            background: rgba(0, 184, 148, 0.15);
+            color: #00b894;
+            border-color: rgba(0, 184, 148, 0.1);
+        }
+        .toast-display .toast-tag.warning {
+            background: rgba(253, 203, 110, 0.15);
+            color: #fdcb6e;
+            border-color: rgba(253, 203, 110, 0.1);
+        }
+        .toast-display .toast-tag.danger {
+            background: rgba(225, 112, 85, 0.15);
+            color: #e17055;
+            border-color: rgba(225, 112, 85, 0.1);
+        }
+        .toast-display .toast-tag.info {
+            background: rgba(107, 203, 255, 0.15);
+            color: #6bcbff;
+            border-color: rgba(107, 203, 255, 0.1);
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            margin: 1.5rem 0;
+            position: relative;
+            z-index: 1;
+        }
+        .btn {
+            padding: 0.8rem 1.2rem;
+            border: none;
+            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: #dce5ff;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.15s;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-primary {
+            background: #6c5ce7;
+            border-color: #6c5ce7;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #7d6ff0;
+        }
+        .btn-success {
+            background: #00b894;
+            border-color: #00b894;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #00d2a0;
+        }
+        .btn-warning {
+            background: #fdcb6e;
+            border-color: #fdcb6e;
+            color: #1a1a2e;
+        }
+        .btn-warning:hover {
+            background: #ffeaa7;
+        }
+        .btn-danger {
+            background: #e17055;
+            border-color: #e17055;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #e74c6f;
+        }
+        .btn-info {
+            background: #6bcbff;
+            border-color: #6bcbff;
+            color: #1a1a2e;
+        }
+        .btn-info:hover {
+            background: #87d4ff;
+        }
+        .btn-full {
+            grid-column: 1 / -1;
+        }
+
+        /* Input area */
+        .input-area {
+            display: flex;
+            gap: 0.6rem;
+            margin: 1rem 0;
+            position: relative;
+            z-index: 1;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 0.8rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            color: #dce5ff;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.15s;
+        }
+        .input-area input:focus {
+            border-color: #6c5ce7;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .input-area input::placeholder {
+            color: #54668f;
+        }
+        .input-area button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 1rem;
+            background: #6c5ce7;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+        .input-area button:hover {
+            background: #7d6ff0;
+            transform: scale(1.02);
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.6rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            position: relative;
+            z-index: 1;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 0.4rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0.8rem;
+        }
+        .stat-item .number {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #dce5ff;
+        }
+        .stat-item .label {
+            font-size: 0.65rem;
+            color: #54668f;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Toast notification (the actual toast popup) */
+        .toast-popup {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 1.2rem;
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            max-width: 400px;
+            transform: translateX(120%);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .toast-popup.show {
+            transform: translateX(0);
+        }
+        .toast-popup .toast-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+        .toast-popup .toast-content {
+            flex: 1;
+        }
+        .toast-popup .toast-content .title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .toast-popup .toast-content .desc {
+            font-size: 0.8rem;
+            color: #8899c7;
+        }
+        .toast-popup .toast-close {
+            background: none;
+            border: none;
+            color: #54668f;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0 0.2rem;
+        }
+        .toast-popup .toast-close:hover {
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.5rem;
+                border-radius: 1.5rem;
+            }
+            .header h1 {
+                font-size: 1.6rem;
+            }
+            .controls {
+                grid-template-columns: 1fr 1fr;
+            }
+            .toast-display .toast-message {
+                font-size: 1.1rem;
+            }
+            .input-area {
+                flex-direction: column;
+            }
+            .input-area button {
+                width: 100%;
+            }
+            .toast-popup {
+                bottom: 1rem;
+                right: 1rem;
+                left: 1rem;
+                max-width: unset;
+                padding: 0.8rem 1rem;
+            }
+        }
+        @media (max-width: 400px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            .btn-full {
+                grid-column: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <span class="emoji">🍞</span>
+            <h1>Random Toast Generator</h1>
+            <p>Generate random toast messages with different styles and personalities!</p>
+        </div>
+
+        <!-- Toast Display -->
+        <div class="toast-display" id="toastDisplay">
+            <div class="toast-emoji" id="toastEmoji">🎉</div>
+            <div class="toast-message" id="toastMessage">Click "Generate Toast" to get started!</div>
+            <div class="toast-sub" id="toastSub">Every toast is unique and random</div>
+            <div class="toast-tags" id="toastTags">
+                <span class="toast-tag info">🎯 Random</span>
+                <span class="toast-tag">✨ Fun</span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" id="generateBtn">🎲 Generate Toast</button>
+            <button class="btn btn-success" id="saveBtn">💾 Save Toast</button>
+            <button class="btn btn-warning" id="shareBtn">📤 Share</button>
+            <button class="btn btn-danger" id="clearBtn">🗑️ Clear</button>
+            <button class="btn btn-info btn-full" id="customBtn">✏️ Custom Toast</button>
+        </div>
+
+        <!-- Custom Input -->
+        <div class="input-area" id="customInputArea" style="display:none;">
+            <input type="text" id="customInput" placeholder="Enter your custom toast message..." maxlength="100" />
+            <button id="customSubmitBtn">🍞 Toast It!</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-item">
+                <div class="number" id="toastCount">0</div>
+                <div class="label">Toasts Generated</div>
+            </div>
+            <div class="stat-item">
+                <div class="number" id="favoriteCount">0</div>
+                <div class="label">Favorites</div>
+            </div>
+            <div class="stat-item">
+                <div class="number" id="lastToastTime">-</div>
+                <div class="label">Last Toast</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Popup Notification -->
+    <div class="toast-popup" id="toastPopup">
+        <span class="toast-icon" id="popupIcon">🍞</span>
+        <div class="toast-content">
+            <div class="title" id="popupTitle">Toast Generated!</div>
+            <div class="desc" id="popupDesc">A new random toast has been created</div>
+        </div>
+        <button class="toast-close" id="popupClose">✕</button>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- Toast Database ----------
+            const toastDatabase = [{
+                emoji: '🎉',
+                message: 'You are a toast-tastic human!',
+                sub: 'Keep shining like golden bread',
+                tags: ['success', '✨ Motivational']
+            }, {
+                emoji: '🍞',
+                message: 'Toast to new beginnings!',
+                sub: 'Every day is a fresh slice',
+                tags: ['info', '🌅 Inspirational']
+            }, {
+                emoji: '🔥',
+                message: 'You\'re on fire today!',
+                sub: 'Keep the toast warm and the energy high',
+                tags: ['warning', '⚡ Energetic']
+            }, {
+                emoji: '😎',
+                message: 'Stay cool, stay toasty!',
+                sub: 'You\'re the toast of the town',
+                tags: ['info', '🌟 Cool']
+            }, {
+                emoji: '💪',
+                message: 'Toast power activated!',
+                sub: 'You can achieve anything',
+                tags: ['success', '💪 Motivational']
+            }, {
+                emoji: '🌟',
+                message: 'You are one in a muffin!',
+                sub: 'Unique and perfectly toasted',
+                tags: ['warning', '🌟 Special']
+            }, {
+                emoji: '🎯',
+                message: 'Toast on target!',
+                sub: 'Aiming for greatness',
+                tags: ['info', '🎯 Focused']
+            }, {
+                emoji: '🌈',
+                message: 'Every color of toast is beautiful',
+                sub: 'Embrace your uniqueness',
+                tags: ['success', '🌈 Inspirational']
+            }, {
+                emoji: '🚀',
+                message: 'Toasting to the stars!',
+                sub: 'Reach for the sky',
+                tags: ['warning', '🚀 Ambitious']
+            }, {
+                emoji: '💖',
+                message: 'Spread love like butter on toast',
+                sub: 'Kindness is the best topping',
+                tags: ['success', '💖 Heartfelt']
+            }, {
+                emoji: '🧠',
+                message: 'Smart toast for smart people!',
+                sub: 'You\'re a genius in bread form',
+                tags: ['info', '🧠 Smart']
+            }, {
+                emoji: '🎭',
+                message: 'Toast with personality!',
+                sub: 'You\'re one of a kind',
+                tags: ['warning', '🎭 Expressive']
+            }, {
+                emoji: '🌊',
+                message: 'Ride the toast wave!',
+                sub: 'Flow with the toast vibes',
+                tags: ['info', '🌊 Chill']
+            }, {
+                emoji: '⚡',
+                message: 'Electric toast energy!',
+                sub: 'Powerful and charged',
+                tags: ['warning', '⚡ Energetic']
+            }, {
+                emoji: '🌅',
+                message: 'Toast of the morning sun!',
+                sub: 'Start your day with a smile',
+                tags: ['success', '🌅 Morning']
+            }, {
+                emoji: '🎨',
+                message: 'Artistic toast creation!',
+                sub: 'Life is a canvas, toast is paint',
+                tags: ['info', '🎨 Creative']
+            }, {
+                emoji: '🏆',
+                message: 'Toast champion!',
+                sub: 'You\'re winning at life',
+                tags: ['success', '🏆 Champion']
+            }, {
+                emoji: '🌙',
+                message: 'Midnight toast cravings!',
+                sub: 'Toast tastes better at night',
+                tags: ['warning', '🌙 Night owl']
+            }, {
+                emoji: '🍀',
+                message: 'Lucky toast!',
+                sub: 'Good things are coming your way',
+                tags: ['success', '🍀 Lucky']
+            }, {
+                emoji: '🎵',
+                message: 'Toast in harmony!',
+                sub: 'Your vibes are melodic',
+                tags: ['info', '🎵 Musical']
+            }, {
+                emoji: '🌺',
+                message: 'Tropical toast vibes!',
+                sub: 'Relax and enjoy the breeze',
+                tags: ['warning', '🌺 Tropical']
+            }, {
+                emoji: '🔥',
+                message: 'Spicy toast alert!',
+                sub: 'You bring the heat',
+                tags: ['danger', '🔥 Hot']
+            }, {
+                emoji: '💎',
+                message: 'Diamond in the toast!',
+                sub: 'You\'re precious and rare',
+                tags: ['success', '💎 Precious']
+            }, {
+                emoji: '🌿',
+                message: 'Green toast, green living!',
+                sub: 'Eco-friendly and fresh',
+                tags: ['info', '🌿 Green']
+            }, {
+                emoji: '🎪',
+                message: 'Toast circus!',
+                sub: 'Life is a wonderful show',
+                tags: ['warning', '🎪 Fun']
+            }, {
+                emoji: '🧘',
+                message: 'Zen toast meditation!',
+                sub: 'Find peace in every bite',
+                tags: ['info', '🧘 Zen']
+            }, {
+                emoji: '🚲',
+                message: 'Toast on the move!',
+                sub: 'Keep pedaling forward',
+                tags: ['success', '🚲 Active']
+            }, {
+                emoji: '📚',
+                message: 'Toast professor!',
+                sub: 'Knowledge is the best toast topping',
+                tags: ['info', '📚 Smart']
+            }, {
+                emoji: '🎮',
+                message: 'Toast gamer!',
+                sub: 'Level up your toast game',
+                tags: ['warning', '🎮 Gaming']
+            }, {
+                emoji: '🌌',
+                message: 'Galactic toast!',
+                sub: 'Out of this world',
+                tags: ['success', '🌌 Cosmic']
+            }];
+
+            // ---------- DOM refs ----------
+            const toastDisplay = document.getElementById('toastDisplay');
+            const toastEmoji = document.getElementById('toastEmoji');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastSub = document.getElementById('toastSub');
+            const toastTags = document.getElementById('toastTags');
+
+            const generateBtn = document.getElementById('generateBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const shareBtn = document.getElementById('shareBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const customBtn = document.getElementById('customBtn');
+            const customInputArea = document.getElementById('customInputArea');
+            const customInput = document.getElementById('customInput');
+            const customSubmitBtn = document.getElementById('customSubmitBtn');
+
+            const toastCount = document.getElementById('toastCount');
+            const favoriteCount = document.getElementById('favoriteCount');
+            const lastToastTime = document.getElementById('lastToastTime');
+
+            const toastPopup = document.getElementById('toastPopup');
+            const popupIcon = document.getElementById('popupIcon');
+            const popupTitle = document.getElementById('popupTitle');
+            const popupDesc = document.getElementById('popupDesc');
+            const popupClose = document.getElementById('popupClose');
+
+            // ---------- State ----------
+            let currentToast = null;
+            let favorites = JSON.parse(localStorage.getItem('toastFavorites')) || [];
+            let generatedCount = parseInt(localStorage.getItem('toastGeneratedCount')) || 0;
+
+            // ---------- Functions ----------
+            function getRandomToast() {
+                const index = Math.floor(Math.random() * toastDatabase.length);
+                return { ...toastDatabase[index], id: Date.now() };
+            }
+
+            function displayToast(toast) {
+                currentToast = toast;
+                toastEmoji.textContent = toast.emoji;
+                toastEmoji.style.animation = 'none';
+                setTimeout(() => {
+                    toastEmoji.style.animation = 'pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                }, 10);
+
+                toastMessage.textContent = toast.message;
+                toastMessage.style.animation = 'none';
+                setTimeout(() => {
+                    toastMessage.style.animation = 'fade-up 0.5s ease';
+                }, 10);
+
+                toastSub.textContent = toast.sub;
+
+                // Tags
+                toastTags.innerHTML = toast.tags.map(tag => {
+                    const isSpecial = ['success', 'warning', 'danger', 'info'].some(s => tag.includes(s));
+                    const cls = isSpecial ? tag.toLowerCase().replace(/[^a-z]/g, '') : '';
+                    return `<span class="toast-tag ${cls}">${tag}</span>`;
+                }).join('');
+
+                // Update stats
+                generatedCount++;
+                localStorage.setItem('toastGeneratedCount', generatedCount);
+                toastCount.textContent = generatedCount;
+                favoriteCount.textContent = favorites.length;
+                lastToastTime.textContent = new Date().toLocaleTimeString();
+
+                // Show popup notification
+                showPopup('🍞', 'Toast Generated!', `"${toast.message}"`);
+            }
+
+            function generateRandomToast() {
+                const toast = getRandomToast();
+                displayToast(toast);
+                // Random chance to show a special popup animation
+                if (Math.random() > 0.7) {
+                    toastDisplay.style.borderColor = 'rgba(108, 92, 231, 0.3)';
+                    setTimeout(() => {
+                        toastDisplay.style.borderColor = 'rgba(255, 255, 255, 0.04)';
+                    }, 1000);
+                }
+            }
+
+            function saveToast() {
+                if (!currentToast) {
+                    showPopup('⚠️', 'No Toast to Save', 'Generate a toast first!');
+                    return;
+                }
+
+                const exists = favorites.some(f => f.message === currentToast.message);
+                if (exists) {
+                    showPopup('⚠️', 'Already Saved', 'This toast is already in your favorites!');
+                    return;
+                }
+
+                favorites.push({ ...currentToast, savedAt: Date.now() });
+                localStorage.setItem('toastFavorites', JSON.stringify(favorites));
+                favoriteCount.textContent = favorites.length;
+                showPopup('💾', 'Toast Saved!', 'Added to your favorites collection');
+            }
+
+            function shareToast() {
+                if (!currentToast) {
+                    showPopup('⚠️', 'No Toast to Share', 'Generate a toast first!');
+                    return;
+                }
+
+                const text = `${currentToast.emoji} ${currentToast.message}\n${currentToast.sub}`;
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Random Toast',
+                        text: text,
+                    }).catch(() => {});
+                } else {
+                    // Fallback: copy to clipboard
+                    navigator.clipboard.writeText(text).then(() => {
+                        showPopup('📤', 'Copied to Clipboard!', 'Toast message ready to share');
+                    }).catch(() => {
+                        // If clipboard fails, show alert
+                        alert('Share this toast:\n\n' + text);
+                    });
+                }
+            }
+
+            function clearToast() {
+                currentToast = null;
+                toastEmoji.textContent = '🍞';
+                toastMessage.textContent = 'Click "Generate Toast" to get started!';
+                toastSub.textContent = 'Every toast is unique and random';
+                toastTags.innerHTML = `
+                    <span class="toast-tag info">🎯 Random</span>
+                    <span class="toast-tag">✨ Fun</span>
+                `;
+                toastDisplay.style.borderColor = 'rgba(255, 255, 255, 0.04)';
+            }
+
+            function showPopup(icon, title, desc) {
+                popupIcon.textContent = icon;
+                popupTitle.textContent = title;
+                popupDesc.textContent = desc;
+                toastPopup.classList.add('show');
+
+                clearTimeout(popupClose._timer);
+                popupClose._timer = setTimeout(() => {
+                    toastPopup.classList.remove('show');
+                }, 4000);
+            }
+
+            function toggleCustomInput() {
+                if (customInputArea.style.display === 'none') {
+                    customInputArea.style.display = 'flex';
+                    customBtn.textContent = '🔒 Close Custom';
+                    customInput.focus();
+                } else {
+                    customInputArea.style.display = 'none';
+                    customBtn.textContent = '✏️ Custom Toast';
+                }
+            }
+
+            function createCustomToast() {
+                const text = customInput.value.trim();
+                if (!text) {
+                    showPopup('⚠️', 'Empty Toast', 'Please enter a custom toast message!');
+                    return;
+                }
+
+                const emojis = ['🎉', '🍞', '🔥', '😎', '💪', '🌟', '🎯', '🌈', '🚀', '💖', '🧠', '🎭', '🌊', '⚡', '🌅'];
+                const tags = ['✨ Custom', '🎨 Creative', '💡 Original', '🌟 Unique'];
+
+                const toast = {
+                    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+                    message: text,
+                    sub: 'Your custom creation! 🌟',
+                    tags: [tags[Math.floor(Math.random() * tags.length)], '✨ Special']
+                };
+
+                displayToast(toast);
+                customInput.value = '';
+                customInputArea.style.display = 'none';
+                customBtn.textContent = '✏️ Custom Toast';
+                showPopup('🎨', 'Custom Toast Created!', 'Your unique toast is ready');
+            }
+
+            // ---------- Event Listeners ----------
+            generateBtn.addEventListener('click', generateRandomToast);
+            saveBtn.addEventListener('click', saveToast);
+            shareBtn.addEventListener('click', shareToast);
+            clearBtn.addEventListener('click', clearToast);
+            customBtn.addEventListener('click', toggleCustomInput);
+            customSubmitBtn.addEventListener('click', createCustomToast);
+
+            customInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    createCustomToast();
+                }
+            });
+
+            popupClose.addEventListener('click', () => {
+                toastPopup.classList.remove('show');
+                clearTimeout(popupClose._timer);
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT') {
+                    if (e.key === 'Enter' && customInputArea.style.display !== 'none') {
+                        createCustomToast();
+                    }
+                    return;
+                }
+                if (e.key === 'g' || e.key === 'G') generateRandomToast();
+                if (e.key === 's' || e.key === 'S') saveToast();
+                if (e.key === 'c' || e.key === 'C') clearToast();
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    generateRandomToast();
+                }
+            });
+
+            // Click anywhere on toast display to generate new toast
+            toastDisplay.addEventListener('click', generateRandomToast);
+
+            // ---------- Init ----------
+            toastCount.textContent = generatedCount;
+            favoriteCount.textContent = favorites.length;
+            lastToastTime.textContent = '-';
+
+            // Generate first toast with a slight delay
+            setTimeout(() => {
+                generateRandomToast();
+            }, 500);
+
+            console.log('🍞 Random Toast Generator loaded!');
+            console.log('💡 Tips:');
+            console.log('  - Click "Generate Toast" or press Space for a new toast');
+            console.log('  - Click the toast display to generate another one');
+            console.log('  - Save your favorite toasts');
+            console.log('  - Create custom toasts with the Custom button');
+            console.log('  - Keyboard shortcuts: G=generate, S=save, C=clear');
+
+        })();
+    </script>
+</body>
+</html>
